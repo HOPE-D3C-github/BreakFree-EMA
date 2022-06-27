@@ -3,11 +3,9 @@ paths.txt
 setup-repo.html
 setup-repo.log
 check-data-versus-expected-design.html
-ignore - brian_exploring_4now.R
-ignore - brian_exploring_4now_v2.R
-ignore - create_crosswalk_4_data_management.R
-ignore - exporing_extra_ema_cc2.R
-ignore - tony_exploring_MD2K_issues.R
+
+# "ignore" files
+ignore -*
 
 # History files
 .Rhistory
