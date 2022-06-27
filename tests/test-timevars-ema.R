@@ -6,7 +6,7 @@ source("paths.R")
 
 # Load 'clean' data files
 masterlist <- readRDS(file = file.path(path_breakfree_output_data, "masterlist.rds"))
-all_ema_data <- readRDS(file = file.path(path_breakfree_output_data, "all_ema_data.rds"))
+all_ema_data <- readRDS(file = file.path(path_breakfree_output_data_4dm, "all_ema_data-1-all_delivered.rds"))
 
 # Perform sanity checks on 'clean' data files and document these tests using the testthat package
 test_that("Considering only 'COMPLETED' EMAs, begin time should fall prior to end time.", {
