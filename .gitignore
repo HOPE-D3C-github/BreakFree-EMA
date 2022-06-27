@@ -1,0 +1,58 @@
+paths.R
+paths.txt
+setup-repo.html
+setup-repo.log
+check-data-versus-expected-design.html
+ignore - brian_exploring_4now.R
+ignore - brian_exploring_4now_v2.R
+ignore - create_crosswalk_4_data_management.R
+ignore - exporing_extra_ema_cc2.R
+ignore - tony_exploring_MD2K_issues.R
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# User-specific files
+.Ruserdata
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build
+/*.tar.gz
+
+# Output files from R CMD check
+/*.Rcheck/
+
+# RStudio files
+.Rproj.user/
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# R Environment Variables
+.Renviron
+
+# html files
+*.html
+
+# RMD files (except setup-repo.Rmd)
+*.Rmd
+!setup-repo.Rmd
+
