@@ -56,6 +56,15 @@ list_all_ema_data <- append(list_all_ema_data, list(df_collect_all))
 all_ema_data <- do.call(rbind, list_all_ema_data)
 all_ema_data <- all_ema_data %>% arrange(participant_id, end_unixts)
 
+#tb test start
+# -----------------------------------------------------------------------------
+# Calculate length of Survey Completion Time
+# -----------------------------------------------------------------------------
+
+all_ema_data <- all_ema_data %>% 
+  mutate (survey_length_minutes = as.numeric(end_hrts_AmericaChicago - begin_hrts_AmericaChicago)/60)
+#tb test end
+
 # -----------------------------------------------------------------------------
 # Adding curated withdrew date to be used in exclusion rules
 # -----------------------------------------------------------------------------

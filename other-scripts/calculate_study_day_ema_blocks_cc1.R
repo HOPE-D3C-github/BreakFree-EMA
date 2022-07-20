@@ -481,7 +481,7 @@ all_ema_data_wblocks_cc1 <- all_ema_data_wblocks_cc1 %>%
 # Source in code for the block level dataset here
 #   - it uses many of the variables currently loaded/generated in the lines above
 # ----------------------------------------------------------------------------
-if(F){source("generate-block-level-dataset-cc1.R")}
+if(T){source(file.path("other-scripts","generate-block-level-dataset-cc1.R"))}
 
 # ----------------------------------------------------------------------------
 # Save Dataset

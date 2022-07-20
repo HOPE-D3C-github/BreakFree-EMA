@@ -461,11 +461,9 @@ full_block_ema_w_battery_v3 <- full_block_ema_w_battery_v2 %>%
 
 full_block_ema_w_battery_v3_cc2 <- full_block_ema_w_battery_v3
   
-full_block_ema_w_battery_v3 %>% count(status)
-full_block_ema_w_battery_v3 %>% count(battery_status)
+if(F){full_block_ema_w_battery_v3 %>% count(status)}
+if(F){full_block_ema_w_battery_v3 %>% count(battery_status)}
 
-save(full_block_ema_w_battery_v3_cc2,
-    file = file.path(path_breakfree_staged_data, "full_block_ema_w_battery_v3.RData"))
 
 # -------------------------------------------------------------------
 # -------------------------------------------------------------------
@@ -565,9 +563,9 @@ full_block_ema_w_battery_conditions_v1 <- sqldf(
   as_tibble
 
 
-full_block_ema_w_battery_conditions_v1 %>% group_by(participant_id, study_day_int, block, ema_type, status) %>% mutate(n = n()) %>% filter(n>1 & undelivered) %>% View
+if(F){full_block_ema_w_battery_conditions_v1 %>% group_by(participant_id, study_day_int, block, ema_type, status) %>% mutate(n = n()) %>% filter(n>1 & undelivered) %>% View}
 
-full_block_ema_w_battery_conditions_v1 %>% filter(undelivered) %>% count(status, condition_0_reason) %>% View
+if(F){full_block_ema_w_battery_conditions_v1 %>% filter(undelivered) %>% count(status, condition_0_reason) %>% View}
 
 # ----------------------------------------------------------------
 # Start aggregating  
@@ -608,7 +606,7 @@ full_block_ema_w_battery_conditions_v3 <- full_block_ema_w_battery_conditions_v2
     )
   )
 
-full_block_ema_w_battery_conditions_v3 %>% count(status) %>% View
+if(F){full_block_ema_w_battery_conditions_v3 %>% count(status) %>% View}
 
 # rename status and create undelivered indicators to match cc1 format
 full_block_ema_w_battery_conditions_v4 <- full_block_ema_w_battery_conditions_v3 %>% 
@@ -622,11 +620,16 @@ full_block_ema_w_battery_conditions_v4 <- full_block_ema_w_battery_conditions_v3
          )
   
   
-full_block_ema_w_battery_conditions_v4 %>% count(status, undelivered_rsn, conditions_stream_summary, battery_stream_summary) %>% View
+if(F){full_block_ema_w_battery_conditions_v4 %>% count(status, undelivered_rsn, conditions_stream_summary, battery_stream_summary) %>% View}
 
+# drop columns that won't continue through pipeline
+block_level_ema_cc2 <- full_block_ema_w_battery_conditions_v4 %>% 
+  select(-contains("_log"), -privacy_on, -battery_insufficient, -driving, -condition_0_reason, 
+         -n_conditions, -condition_0_reasons, -status_raw, -withdrew_date, -undelivered, 
+         -first_day_date, -last_day_date, -withdrew)
 
-save(full_block_ema_w_battery_conditions_v4,
-     file = file.path(path_breakfree_staged_data, "block_level_ema_cc2.RData"))
+saveRDS(object = block_level_ema_cc2,
+     file = file.path(path_breakfree_staged_data, "block_level_ema_cc2.Rds"))
 
 
 

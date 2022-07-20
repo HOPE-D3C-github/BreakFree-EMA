@@ -673,15 +673,15 @@ ema_blocklevel_w_log_v5 <- ema_blocklevel_w_log_v4 %>%
   ),
   .before = log_statuses_w_false)
 
-ema_blocklevel_w_log_v5 %>% count(status)
+if(F){ema_blocklevel_w_log_v5 %>% count(status)}
 
 ema_blocklevel_w_log_v5 %>% 
   filter(status %in% c('UNDELIVERED - PARTIALLY LOW BATTERY', 'UNDELIVERED - PARTIALLY MISSING BATTERY DATA', 'UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE')) %>% #View()
   count(undelivered_log_reason)
 
-ema_blocklevel_w_log_v5 %>% 
+if(F){ema_blocklevel_w_log_v5 %>% 
   filter(status %in% c('UNDELIVERED - PARTIALLY LOW BATTERY', 'UNDELIVERED - PARTIALLY MISSING BATTERY DATA', 'UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE')) %>% 
-  filter(is.na(undelivered_log_reason)) %>% View()
+  filter(is.na(undelivered_log_reason)) %>% View()}
 
 
 ema_blocklevel_w_log_v6 <- ema_blocklevel_w_log_v5 %>% 
@@ -692,8 +692,7 @@ ema_blocklevel_w_log_v6 <- ema_blocklevel_w_log_v5 %>%
     T ~ paste0("UNDELIVERED - ", undelivered_log_reason)
   ))
 
-ema_blocklevel_w_log_v6 %>% count(status) %>% View  
-#ema_blocklevel_w_log_v6 %>% filter(status == "UNDELIVERED - Unknown Cause - No corresponding EMA to Condition Record") %>% select(status_log_agg) %>% View
+if(F){ema_blocklevel_w_log_v6 %>% count(status) %>% View}  
 ema_blocklevel_w_log_v6_cc1 <- ema_blocklevel_w_log_v6
 
 # Cleanup undelivered to match CC2 format and create undelivered indicators
@@ -708,12 +707,14 @@ ema_blocklevel_w_log_v7 <- ema_blocklevel_w_log_v6 %>%
          .after = status
          )
 
-ema_blocklevel_w_log_v7 %>% count(status, undelivered_rsn, conditions_stream_summary, battery_stream_summary) %>% View
+if(F){ema_blocklevel_w_log_v7 %>% count(status, undelivered_rsn, conditions_stream_summary, battery_stream_summary) %>% View}
 
-ema_blocklevel_w_log_v7_cc1 <- ema_blocklevel_w_log_v7
+block_level_ema_cc1 <- ema_blocklevel_w_log_v7 %>% select(-contains("_log"), -undelivered, -status_raw, -log_statuses_w_false, -withdrew_date, 
+                                                          -first_day_date, -last_day_date) 
 
-save(ema_blocklevel_w_log_v7_cc1,
-     file = file.path(path_breakfree_staged_data, "block_level_ema_cc1.RData"))
+
+saveRDS(object = block_level_ema_cc1,
+     file = file.path(path_breakfree_staged_data, "block_level_ema_cc1.Rds"))
 
 
 

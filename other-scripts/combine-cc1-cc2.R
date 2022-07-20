@@ -130,16 +130,26 @@ ema_items_labelled <- ema_items_labelled_2
 ###update variable names in ema data to correspond to new variable names
 # load(file.path(path_breakfree_staged_data,"all_ema_data_cc1.RData"))
 # load(file.path(path_breakfree_staged_data,"all_ema_data_cc2.RData"))
-load(file.path(path_breakfree_staged_data, "all_ema_data_wblocks_cc1.RData"))
-load(file.path(path_breakfree_staged_data, "all_ema_data_wblocks_cc2.RData"))
+#load(file.path(path_breakfree_staged_data, "all_ema_data_wblocks_cc1.RData"))
+#load(file.path(path_breakfree_staged_data, "all_ema_data_wblocks_cc2.RData"))
+
+block_level_ema_cc1 <- readRDS(file.path(path_breakfree_staged_data, "block_level_ema_cc1.Rds"))
+block_level_ema_cc2 <- readRDS(file.path(path_breakfree_staged_data, "block_level_ema_cc2.Rds"))
 
 #create renamed version of data
-all_ema_data_cc1_renamed <- all_ema_data_wblocks_cc1
-all_ema_data_cc2_renamed <- all_ema_data_wblocks_cc2
+#all_ema_data_cc1_renamed <- all_ema_data_wblocks_cc1
+#all_ema_data_cc2_renamed <- all_ema_data_wblocks_cc2
+
+all_ema_data_cc1_renamed <- block_level_ema_cc1
+all_ema_data_cc2_renamed <- block_level_ema_cc2
+
 
 #for each column, define lookup in combined codebook
-cc1_lookups <- match(names(all_ema_data_wblocks_cc1),ema_items_labelled$varname_CC1)
-cc2_lookups <- match(names(all_ema_data_wblocks_cc2),ema_items_labelled$varname_CC2)
+# cc1_lookups <- match(names(all_ema_data_wblocks_cc1),ema_items_labelled$varname_CC1)
+# cc2_lookups <- match(names(all_ema_data_wblocks_cc2),ema_items_labelled$varname_CC2)
+cc1_lookups <- match(names(block_level_ema_cc1),ema_items_labelled$varname_CC1)
+cc2_lookups <- match(names(block_level_ema_cc2),ema_items_labelled$varname_CC2)
+
 
 #replace column names in renamed dataset with non-missing lookup values
 names(all_ema_data_cc1_renamed)[!is.na(cc1_lookups)] <- na.omit(ema_items_labelled$varname_breakfree[cc1_lookups])

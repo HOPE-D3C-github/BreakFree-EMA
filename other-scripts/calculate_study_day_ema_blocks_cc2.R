@@ -465,7 +465,7 @@ day_start_and_end_cc2_v1d <- day_start_and_end_cc2_v1d %>% rename(day_end_hrts =
 # Discuss the 16 NA block Calcs. Appear to occur after the end of day button was pressed, but otherwise within the window for the block
 # test <- all_ema_data_wblocks_cc2 %>% mutate(date = as_date(end_hrts_AmericaChicago)) %>% group_by(participant_id, date) %>% filter(any(is.na(block_calc)))
 
-if(F){source("generate-block-level-dataset-cc2.R")}
+if(T){source(file.path("other-scripts","generate-block-level-dataset-cc2.R"))}
 
 # ----------------------------------------------------------------------------
 # Save Dataset

@@ -244,14 +244,53 @@ all_ema_data_cleaned <- all_ema_data_cleaned %>% mutate(
                                cc_indicator == 1 & is.na(othertob_which_v1) ~ NA,
                                cc_indicator == 2 & is.na(othertob_which_v2) ~ NA,
                                T~FALSE))
+# ----------------------------------------------------------------
+# These fixes can be moved upstream to clean up the code
+# ----------------------------------------------------------------
+all_ema_data_cleaned <- all_ema_data_cleaned %>% 
+  rename(block_calc = block,
+         percent_time_battery_at_no_data = percent_time_battery_at_no_battery_data)
+
+all_ema_data_cleaned_v2 <- all_ema_data_cleaned %>% 
+  mutate(status = toupper(status),
+         undelivered_rsn = stringi::stri_trans_totitle(undelivered_rsn),
+         conditions_stream_summary = str_remove(str_replace_all(stringi::stri_trans_totitle(conditions_stream_summary), "Ema", "EMA"), "Missing Data: "),
+         battery_stream_summary = str_remove(stringi::stri_trans_totitle(battery_stream_summary), " / Other Cause"))
+
+all_ema_data_cleaned_v3 <- all_ema_data_cleaned_v2 %>% 
+  mutate(invalid_end_day = case_when(
+    status == "UNDELIVERED" & is.na(invalid_end_day) ~ FALSE,
+    T ~ invalid_end_day),
+    multi_day_start = case_when(
+      status == "UNDELIVERED" & is.na(multi_day_start) ~ FALSE,
+      T ~ multi_day_start
+    ))
+
+all_ema_data_cleaned_v4 <- all_ema_data_cleaned_v3 %>% 
+  group_by(participant_id, day_start_hrts_AmericaChicago) %>% 
+  mutate(invalid_end_day_on_study_day = case_when(
+    status == "UNDELIVERED" & any(invalid_end_day, na.rm = T) ~ TRUE,
+    status == "UNDELIVERED" ~ FALSE,
+    T ~ invalid_end_day_on_study_day
+  ),
+  multi_day_start_on_study_day = case_when(
+    status == "UNDELIVERED" & any(multi_day_start, na.rm = T) ~ TRUE,
+    status == "UNDELIVERED" ~ FALSE,
+    T ~ multi_day_start_on_study_day
+  ))
+
+ 
+# ----------------------------------------------------------------
 
 # Reposition columns
-all_ema_data_D1_all_delivered <- all_ema_data_cleaned %>% 
-  relocate(begin_hrts_UTC, end_hrts_UTC, time_software_calc, day_start_hrts_AmericaChicago,
+all_ema_data_D1_all_delivered <- all_ema_data_cleaned_v3 %>% 
+  relocate(begin_hrts_UTC, end_hrts_UTC, time_software_calc, day_start_hrts_AmericaChicago, time_range_AmerChi_start, time_range_AmerChi_end,
            block_start_hrts_AmericaChicago, block_end_hrts_AmericaChicago, extra_ema,
            extra_ema_on_study_day, multi_day_start, multi_day_start_on_study_day,
            invalid_end_day, invalid_end_day_on_study_day, .after = everything()) %>% 
-  relocate(block_calc, .after = with_any_response) 
+  relocate(cc_indicator, .after = participant_id) %>% 
+  relocate(with_any_response, .after = ema_type) %>% 
+  relocate(begin_hrts_AmericaChicago, end_hrts_AmericaChicago, .before = ema_type)
 
 
 save(all_ema_data_D1_all_delivered,conditions_applied_simple, unedited_and_clean_ema_vars_dat,
