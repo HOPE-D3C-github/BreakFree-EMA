@@ -9,7 +9,7 @@ library(haven)
 source("paths.R",echo = F)
 
 aggregation_rules <- read.csv(file.path(path_breakfree_other_input_data, "EMA_aggregations_4 read in.csv")) %>% 
-  select(Variables, AGGREGATION.METHOD.for.R.code, Question.Options) %>% rename(agg_rule = AGGREGATION.METHOD.for.R.code)
+  select(Variables, AGGREGATION.METHOD.for.R.code, Question.Options, Preserve_values_4_invalid_end_days) %>% rename(agg_rule = AGGREGATION.METHOD.for.R.code)
 
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D1_all_delivered.RData"))
 
@@ -19,7 +19,7 @@ remove(conditions_applied_simple, unedited_and_clean_ema_vars_dat, all_ema_data_
 
 rule_types <- aggregation_rules %>% filter(agg_rule != "New Variable") %>% select(agg_rule) %>% unique() %>% arrange(agg_rule) %>% .$agg_rule
 rule_variable_names <- aggregation_rules %>% filter(agg_rule != "New Variable") %>% select(Variables) %>% .$Variables
-
+variables_to_replace_na_for_invalid_EOD <- aggregation_rules %>% filter(!Preserve_values_4_invalid_end_days) %>% pull(Variables)
 
 all_ema_data <- all_ema_data %>% 
   add_column(aggreg_num_extra_ema = 0,
@@ -45,6 +45,13 @@ for (participant in unique(all_ema_data$participant_id)){  #iterate over partici
       if (ema_i$with_any_response == 1){   # Filter out EMA's without any completed fields
         temp_drop_ema <- temp_drop_ema %>% add_row(ema_i)
       }
+      # Testing - keep rows for invalid end day, but remove all EMA data. Can retain most metadata
+      if (ema_i$invalid_end_day){
+        ema_i_invalid_shell <- ema_i %>% mutate(status = "DELIVERED_AFTER_END_OF_DAY", 
+                                                with_any_response = 0,
+                                                across(all_of(variables_to_replace_na_for_invalid_EOD), ~ NA))
+        ema_data_per_study_design <- ema_data_per_study_design %>% add_row(ema_i_invalid_shell)
+      }
     } else {   # Non-Extra EMA's come through to this else
       if (ema_i$with_any_response == 0){  
         # Non-Extra EMAs with all data missing have their record added but no Extra EMA will be aggregated to this record. 
@@ -52,12 +59,12 @@ for (participant in unique(all_ema_data$participant_id)){  #iterate over partici
         ema_data_per_study_design <- ema_data_per_study_design %>% add_row(ema_i) 
         next
       }
-      if (nrow(temp_drop_ema)>0){   #if TRUE, there is Extra EMA data (in temp_drop_ema) to include in the current Non-Extra EMA record (ema_i)
-        updated_ema_i <- ema_i   # create the updated record as a copy of the current Non-Extra EMA - then modify it for applicable variables
+      if (nrow(temp_drop_ema)>0){   #if TRUE, there is Extra EMA or invalid End Day data (in temp_drop_ema) to include in the current Non-Extra EMA record (ema_i)
+        updated_ema_i <- ema_i   # create the updated record as a copy of the current EMA - then modify it for applicable variables
         updated_ema_i$aggreg_num_extra_ema <- sum(temp_drop_ema$extra_ema)
         updated_ema_i$aggreg_num_invalid_end_day_ema <- sum(temp_drop_ema$invalid_end_day)
         for (variable in colnames(ema_i)){
-          var_values <- temp_drop_ema[variable] %>% add_row(ema_i[variable])  # placeholder for all values between the Non-Extra EMA and the Extra EMA(s) being aggregated
+          var_values <- temp_drop_ema[variable] %>% add_row(updated_ema_i[variable])  # placeholder for all values between the Non-Extra EMA and the Extra EMA(s) being aggregated
           if (all(is.na(var_values))){  # All values are NA - leave the Non-Extra EMA's NA in place, proceed to next variable
             next
           }
@@ -379,7 +386,8 @@ ema_data_per_study_design3 <- ema_data_per_study_design2 %>%
 
 # START Tests #####
 test1 <- test_that(desc = "Correct number of records per participant?", {
-  all_ema_minus_extra_nrow <- all_ema_data %>% filter(!extra_ema) %>% filter(!invalid_end_day) %>% group_by(participant_id) %>% summarize(nrows = n())
+  all_ema_minus_extra_nrow <- all_ema_data %>% filter(!extra_ema) %>%  #%>% filter(!invalid_end_day) 
+    group_by(participant_id) %>% summarize(nrows = n())
   ema_data_per_study_design3_nrow <- ema_data_per_study_design3 %>% group_by(participant_id) %>% summarize(nrows = n())
   expect_equal(object = ema_data_per_study_design3_nrow, 
                expected = all_ema_minus_extra_nrow)})

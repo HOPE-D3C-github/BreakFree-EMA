@@ -339,7 +339,7 @@ full_block_ema_w_battery_v1 %>% count(is.na(participant_id_bat))
 full_block_ema_w_battery_v2 <- full_block_ema_w_battery_v1 %>% 
   mutate(
     battery_status = case_when(
-      is.na(battery_status) ~ "No Battery Data",
+      is.na(battery_status) ~ "No Participant Battery Data",
       T ~ battery_status)
   ) %>% 
   group_by(participant_id, study_date, block, end_hrts_AmericaChicago) %>% 
@@ -439,6 +439,7 @@ full_block_ema_w_battery_v3 <- full_block_ema_w_battery_v2 %>%
       is.na(status) & battery_status == "10-100%" ~ "UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE",
       is.na(status) & percent_time_battery_at_no_battery_data > 0 & percent_time_battery_at_no_battery_data < 100 ~ "UNDELIVERED - PARTIALLY MISSING BATTERY DATA",
       is.na(status) & percent_time_battery_at_no_battery_data == 0 & percent_time_battery_at_0_10 > 0 ~ "UNDELIVERED - PARTIALLY LOW BATTERY",
+      is.na(status) & battery_status %in% c("Before Battery Data Collection Began", "After Battery Data Collection Ended", "No Participant Battery Data") ~ "UNDELIVERED - INSUFFICIENT BATTERY DATA",
       T ~ status), 
     with_any_response = case_when(
       is.na(with_any_response) ~ 0,
@@ -587,7 +588,7 @@ full_block_ema_w_battery_conditions_v2 <- full_block_ema_w_battery_conditions_v1
 full_block_ema_w_battery_conditions_v3 <- full_block_ema_w_battery_conditions_v2 %>% 
   mutate(
     status = case_when(
-      !(status %in% c("UNDELIVERED - PARTIALLY LOW BATTERY", "UNDELIVERED - PARTIALLY MISSING BATTERY DATA", "UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE")) ~ status,
+      !(status %in% c("UNDELIVERED - PARTIALLY LOW BATTERY", "UNDELIVERED - PARTIALLY MISSING BATTERY DATA", "UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE", 'UNDELIVERED - INSUFFICIENT BATTERY DATA')) ~ status,
       condition_0_reasons == "driving" ~ "UNDELIVERED - Driving",
       condition_0_reasons == "battery insufficient" ~ "UNDELIVERED - Battery Insufficient",
       status == "UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE" & condition_0_reasons == "Conditions Okay" ~ "UNDELIVERED - Unknown Cause - Missing Data: No corresponding EMA to Condition Record - SUFFICIENT BATTERY",
@@ -602,6 +603,8 @@ full_block_ema_w_battery_conditions_v3 <- full_block_ema_w_battery_conditions_v2
       status == "UNDELIVERED - PARTIALLY MISSING BATTERY DATA" & is.na(condition_0_reasons) ~ "UNDELIVERED - Unknown Cause - Missing Data: No Corresponding Conditions Data - PARTIALLY MISSING BATTERY DATA",
       status == "UNDELIVERED - PARTIALLY LOW BATTERY" & condition_0_reasons == "Conditions Okay" ~ "UNDELIVERED - Unknown Cause - Missing Data: No corresponding EMA to Condition Record - PARTIALLY LOW BATTERY",
       status == "UNDELIVERED - PARTIALLY LOW BATTERY" & is.na(condition_0_reasons) ~ "UNDELIVERED - Unknown Cause - Missing Data: No Corresponding Conditions Data - PARTIALLY LOW BATTERY",
+      status == "UNDELIVERED - INSUFFICIENT BATTERY DATA" & condition_0_reasons == "Conditions Okay" ~ "UNDELIVERED - Unknown Cause - Missing Data: No corresponding EMA to Condition Record - INSUFFICIENT BATTERY DATA",
+      status == "UNDELIVERED - INSUFFICIENT BATTERY DATA" & is.na(condition_0_reasons) ~ "UNDELIVERED - Unknown Cause - Missing Data: No Corresponding Conditions Data - INSUFFICIENT BATTERY DATA",
       T ~ status
     )
   )
@@ -630,10 +633,6 @@ block_level_ema_cc2 <- full_block_ema_w_battery_conditions_v4 %>%
 
 saveRDS(object = block_level_ema_cc2,
      file = file.path(path_breakfree_staged_data, "block_level_ema_cc2.Rds"))
-
-
-
-
 
 
 

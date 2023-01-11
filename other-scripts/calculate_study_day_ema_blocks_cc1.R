@@ -9,6 +9,7 @@ source("paths.R")
 source(file.path("collect-functions", "io-utils.R"))
 load(file.path(path_breakfree_staged_data, "ema_responses_raw_data_cc1.RData"))
 load(file.path(path_breakfree_staged_data, "all_ema_data_cc1.RData"))
+#dropping unneeded large datasets from script
 remove(all_random_ema_response_files_cc1, all_smoking_ema_response_files_cc1, all_stress_ema_response_files_cc1)
 
 log_phone_data1 <- do.call(bind_rows, all_log_phone_files_cc1)
@@ -27,6 +28,11 @@ log_phone_data3 <- log_phone_data2 %>% filter(status != "NOT_DELIVERED") %>%
          .after = sftware_init_hrts_AmericaChicago) %>% 
   ungroup()
 
+### @Tony: i think it'd be helpful to summarize what's going on here, and in the next one
+# Somewhat exploratory at this stage. 
+# Left joining the phone log dataset to the CC1 EMA dataset
+# This join is not used later, because it drops EMA records that had no 
+# corresponding phone log data
 lj <- sqldf(
     "select log.participant_id, ema.participant_id participant_id_ema, log.study_day, log.BLOCK, log.sftware_init_hrts_AmericaChicago, log.lead_sftware_init_hrts_AmericaChicago, log.id, log.status as status_log,
       iif(log.participant_id is null,0,1) in_log, iif(ema.participant_id is null,0,1) in_ema,
@@ -37,11 +43,18 @@ lj <- sqldf(
             (log.sftware_init_hrts_AmericaChicago <= ema.end_hrts_AmericaChicago and log.lead_sftware_init_hrts_AmericaChicago >= ema.end_hrts_AmericaChicago)") %>% 
   as_tibble
 
+### @Tony: perhaps we can move all counts to if(F)
 lj %>% count(in_log, in_ema)
 if(F){lj %>% filter(in_ema==0) %>% View}
 lj %>% filter(is.na(participant_id_ema)) %>% count(id, status_log)
 
-
+# Right joining the phone log dataset to the CC1 EMA dataset
+# This join is used later, because it doesn't drop EMA records that had no 
+# corresponding phone log data.
+# However, it does drop phone log data that didn't have a delivered EMA,
+# but this data is reconciled during the block-level dataset generation
+# when looking at undelivered EMAs.
+# This can be done at all once to make a more concise process
 rj <- sqldf(
   "select log.participant_id participant_id_log, log.study_day, log.BLOCK, log.sftware_init_hrts_AmericaChicago, log.lead_sftware_init_hrts_AmericaChicago, log.id, log.status as status_log,
       iif(log.participant_id is null,0,1) in_log, iif(ema.participant_id is null,0,1) in_ema,
@@ -57,6 +70,11 @@ test_that(desc = "Did not create extra rows during the merge",{
   expect_equal(object = nrow(rj), expected = nrow(all_ema_data_cc1))
 })
 
+#### @Tony: what's that doing
+# its looking for bad matches
+# I think it makes more sense to include the ema_type as a matching criteria in the "on ..." in the sql syntax
+# which(str_remove(rj$id, "_EMA") != rj$ema_type)
+
 mismatched_ema_type_indices <- c()
 for (i in 1:nrow(rj)){
   if (!is.na(rj$id[i])){
@@ -65,7 +83,6 @@ for (i in 1:nrow(rj)){
     }
   }
 }
-
 
 rj2 <- rj %>% mutate(
   study_day = ifelse(row_number() %in% mismatched_ema_type_indices, NA, study_day),
@@ -143,6 +160,7 @@ if(test1 & test2){
     arrange(participant_id, day_end_unixts) %>%
     group_by(participant_id) %>% 
     mutate(lead_day_end_hrts = lead(day_end_hrts, 
+                                    #"2033-04-05 18:27:47 CDT"
                                       default = as.POSIXct(as.numeric("1996356467"), tz = "UTC", origin="1970-01-01") %>% with_tz(., "America/Chicago")),
            .after = day_end_hrts) %>% 
     ungroup()

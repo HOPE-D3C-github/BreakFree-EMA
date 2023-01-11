@@ -9,6 +9,12 @@
 source(file.path("other-scripts","create-masterlist.R"))
 rm(list = ls())
 
+source(file.path("other-scripts", "read_in_battery_data.R"))
+rm(list = ls())
+
+source(file.path("other-scripts", "processing_battery_data_into_bins.R"))
+rm(list = ls())
+
 source(file.path("ema-scripts","read-raw-data-cc1.R"))
 rm(list = ls())
 

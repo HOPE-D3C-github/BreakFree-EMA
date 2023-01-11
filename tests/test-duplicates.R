@@ -11,7 +11,7 @@ puffm_data <- readRDS(file = file.path(path_breakfree_output_data, "online_puffm
 # Perform sanity checks on 'clean' data files and document these tests using the testthat package
 test_that("Are there any duplicate rows in each file?", {
   output_val <- puffm_data %>%
-    select(participant_id, onlinepuffm_unixts) %>%
+    select(participant_id, p_onlinepuffm_unixts) %>%
     duplicated(.) %>%
     sum(.)
   

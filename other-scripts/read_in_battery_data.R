@@ -1,11 +1,14 @@
 library(dplyr)
 library(lubridate)
 library(tidyr)
+library(tictoc)
 
 source("paths.R")
 source(file.path("collect-functions", "io-utils.R"))
 
-dat_master <- readRDS(file = file.path("C:/Users/u1330076/Box/Break Free curated data/EMA/data for analysis", "masterlist.rds"))
+tic("Main")
+
+load(file = file.path(path_breakfree_staged_data, "masterlist.RData"))
 
 #### Looking at how to import Battery data ####
 # Notes:
@@ -90,8 +93,8 @@ list_df_filtered <- list()
 
 # Specify data stream of interest
 this_string <- "BATTERY+PHONE.csv"
-
-start_time <- Sys.time()
+tic(msg = "CC1 battery data")
+#start_time <- Sys.time()
 for(i in 1: length(ids_cc1)){
   this_id <- ids_cc1[i]
   
@@ -111,63 +114,77 @@ for(i in 1: length(ids_cc1)){
     
     tmp <- try(read.csv(unz(file.path(path_breakfree_cc1_input_data, this_id, this_file),
                             unzipped_filenames), sep = ","))
-    if (!inherits(tmp, 'try-error')){
-      df_raw <- tmp
-    } else {
-      df_raw <- NULL
-    }
-    
-    if (!is.null(df_raw) & ncol(df_raw) == 5){   
+    if (!inherits(tmp, 'try-error')){ 
       # Ran into an error when there are no lines of data in the file ""no lines available in input". this logical allows the process to continue
-      # Another issue where the data file didn't have all the 5 columns (no headers in the csv)
-      df_raw <- df_raw %>%  
-        stats::setNames(c("datetime", "unk_1", "battery_percent", "battery_voltage", "unk_2")) %>% 
-        select(datetime, battery_percent)
+      df_raw <- tmp
+      remove(tmp)
       
-      df_raw  <- df_raw %>% mutate(datetime = datetime/1000)  # convert from unix with milliseconds to unix with seconds
-      
-      df_filtered <- data.frame(datetime = numeric(),
-                                  battery_percent = integer())
-      
-      for(indx in 1:nrow(df_raw)){
-        if (indx == 1){   #add first timestamp
-          df_filtered <- df_filtered %>% add_row(datetime = df_raw$datetime[indx],
-                                                     battery_percent = df_raw$battery_percent[indx])
-        } else if(as.integer(df_raw$datetime[indx]) %% 60 == 0){  #timestamp is divisible by 60 
-          df_filtered <- df_filtered %>% add_row(datetime = df_raw$datetime[indx],
-                                                     battery_percent = df_raw$battery_percent[indx])
-        } else if(df_raw$datetime[indx] - df_filtered$datetime[nrow(df_filtered)] >= 60){  #last added timestamp was more than 60 seconds ago, then add it
-          df_filtered <- df_filtered %>% add_row(datetime = df_raw$datetime[indx],
-                                                     battery_percent = df_raw$battery_percent[indx])
-          }
-        }
-      
-      remove(df_raw)
-      
-      # Add column to record participant ID
-      df_filtered <- df_filtered %>% 
-        mutate(participant_id = this_id) %>% 
-        select(participant_id, everything())
-      
-      #deduplicate entirely duplicated rows
-      df_filtered <- df_filtered[!duplicated(df_filtered),]
-      
-      list_df_filtered <- append(list_df_filtered, list(df_filtered))
-    }
+      if (ncol(df_raw) == 5){   
+        # Another issue where the data file didn't have all the 5 columns (no headers in the csv)
+        df_raw <- df_raw %>%  
+          stats::setNames(c("datetime", "unk_1", "battery_percent", "battery_voltage", "unk_2")) %>% 
+          select(datetime, battery_percent)
+        
+        df_raw  <- df_raw %>% mutate(datetime = datetime/1000)  # convert from unix with milliseconds to unix with seconds
+        
+        df_filtered <- df_raw
+        
+        # test: group_by date-hour-minute level then take 1st per minute group
+        # Add comments about why to subset and how its done
+        
+        df_filtered <- df_filtered %>% 
+          mutate(datetime_UTC = as.POSIXct(as.numeric(datetime), tz = "UTC", origin="1970-01-01"),
+                 datetime_UTC_roundmin = round_date(datetime_UTC, unit = "minute"),
+                 lag_diff_battery_percent = battery_percent - lag(battery_percent, order_by = datetime),
+                 lead_diff_battery_percent = lead(battery_percent, order_by = datetime) - battery_percent,
+                 lag_battery_percent = lag(battery_percent, order_by = datetime),
+                 lead_battery_percent = lead(battery_percent, order_by = datetime),
+                 lag_diff_secs = datetime - lag(datetime, order_by = datetime))
+        
+        df_filtered <- df_filtered %>% filter(datetime > 1) %>% filter(battery_percent <= 100 & battery_percent >= 0) %>% 
+          filter(!(((lag_diff_battery_percent < -5 & lead_diff_battery_percent >5) | (lag_diff_battery_percent >5 & lead_diff_battery_percent < -5)) & lag_diff_secs < 90)) %>% 
+          select(datetime, datetime_UTC_roundmin, battery_percent)
+        
+        
+        df_filtered <- df_filtered %>% 
+          group_by(datetime_UTC_roundmin) %>% 
+          filter(row_number() == 1) %>% 
+          ungroup() %>% 
+          select(datetime, battery_percent)
+        
+        remove(df_raw)
+        
+        # Add column to record participant ID
+        df_filtered <- df_filtered %>% 
+          mutate(participant_id = this_id) %>% 
+          select(participant_id, everything())
+        
+        #deduplicate entirely duplicated rows
+        df_filtered <- df_filtered[!duplicated(df_filtered),]
+        
+        list_df_filtered <- append(list_df_filtered, list(df_filtered))
+      }
+    } 
+    
+    
   }else{
     # In this case, the file we are looking for does not exist for this participant
     next
   }
 }
-end_time <- Sys.time()
-end_time - start_time    # Time difference of 10.6 mins                      ## old - 2.839069 mins
+toc()
+# end_time <- Sys.time()
+# end_time - start_time    # Time difference of 10.6 mins                      
 
 list_battery_data_cc1 <- list_df_filtered
 remove(list_df_filtered)
 remove(df_filtered)
 
-if(F){save(list_battery_data_cc1,
-           file = file.path("C:/Users/u1330076/Box/Break Free curated data/EMA/Tony - demo/staged", "battery_raw_filtered_data_cc1.RData"))}
+if(T){save(list_battery_data_cc1,
+           file = file.path(path_breakfree_staged_data, "battery_60s_filtered_data_cc1.RData"))}
+
+remove(list_battery_data_cc1, dat_csv_file_counts_cc1, dat_zipped_file_counts_cc1, unzipped_all)
+
 
 # -----------------------------------------------------------------------------
 # END cc1 read-raw-data steps (equivalent to "read-raw-data-cc1.R") ####
@@ -216,7 +233,8 @@ list_df_filtered <- list()
 # Specify file of interest
 this_file <- "BATTERY--org.md2k.phonesensor--PHONE.csv.bz2"
 
-start_time <- Sys.time()
+tic("CC2 battery")
+#start_time <- Sys.time()
 for(i in 1: length(ids_cc2)){
   this_id <- ids_cc2[i]
   
@@ -224,76 +242,78 @@ for(i in 1: length(ids_cc2)){
   tmp <- try(read.csv(file.path(path_breakfree_cc2_input_data, this_id, this_file), 
                       header = FALSE, 
                       sep = ","))
-  if (!inherits(tmp, 'try-error')){
-    df_raw <- tmp
-  } else {
-    df_raw <- NULL
-  }
-  
-  if (!is.null(df_raw) & ncol(df_raw) == 5){   
+  if (!inherits(tmp, 'try-error')){ 
     # Ran into an error when there are no lines of data in the file ""no lines available in input". this logical allows the process to continue
-    # Another issue where the data file didn't have all the 5 columns (no headers in the csv)
-    df_raw <- df_raw %>%  
-      stats::setNames(c("datetime", "unk_1", "battery_percent", "battery_voltage", "unk_2")) %>% 
-      select(datetime, battery_percent)
-
-    df_raw  <- df_raw %>% mutate(datetime = datetime/1000)  # convert from unix with milliseconds to unix with seconds
+    df_raw <- tmp
+    remove(tmp)
     
-    df_filtered <- data.frame(datetime = numeric(),
-                              battery_percent = integer())
-    
-    for(indx in 1:nrow(df_raw)){
-      if (indx == 1){   #add first timestamp
-        df_filtered <- df_filtered %>% add_row(datetime = df_raw$datetime[indx],
-                                               battery_percent = df_raw$battery_percent[indx])
-      } else if(as.integer(df_raw$datetime[indx]) %% 60 == 0){  #timestamp is divisible by 60 
-        df_filtered <- df_filtered %>% add_row(datetime = df_raw$datetime[indx],
-                                               battery_percent = df_raw$battery_percent[indx])
-      } else if(df_raw$datetime[indx] - df_filtered$datetime[nrow(df_filtered)] >= 60){  #last added timestamp was more than 60 seconds ago, then add it
-        df_filtered <- df_filtered %>% add_row(datetime = df_raw$datetime[indx],
-                                               battery_percent = df_raw$battery_percent[indx])
-      }
+    if (ncol(df_raw) == 5){   
+      # Another issue where the data file didn't have all the 5 columns (no headers in the csv)
+      df_raw <- df_raw %>%  
+        stats::setNames(c("datetime", "unk_1", "battery_percent", "battery_voltage", "unk_2")) %>% 
+        select(datetime, battery_percent)
+      
+      df_raw  <- df_raw %>% mutate(datetime = datetime/1000)  # convert from unix with milliseconds to unix with seconds
+      
+      df_filtered <- df_raw
+      
+      # test: group_by date-hour-minute level then take 1st per minute group
+      # Add comments about why to subset and how its done
+      
+      df_filtered <- df_filtered %>% 
+        mutate(datetime_UTC = as.POSIXct(as.numeric(datetime), tz = "UTC", origin="1970-01-01"),
+               datetime_UTC_roundmin = round_date(datetime_UTC, unit = "minute"),
+               lag_diff_battery_percent = battery_percent - lag(battery_percent, order_by = datetime),
+               lead_diff_battery_percent = lead(battery_percent, order_by = datetime) - battery_percent,
+               lag_battery_percent = lag(battery_percent, order_by = datetime),
+               lead_battery_percent = lead(battery_percent, order_by = datetime),
+               lag_diff_secs = datetime - lag(datetime, order_by = datetime))
+      
+      df_filtered <- df_filtered %>% filter(datetime > 1) %>% filter(battery_percent <= 100 & battery_percent >= 0) %>% 
+        filter(!(((lag_diff_battery_percent < -5 & lead_diff_battery_percent >5) | (lag_diff_battery_percent >5 & lead_diff_battery_percent < -5)) & lag_diff_secs < 90)) %>% 
+        select(datetime, datetime_UTC_roundmin, battery_percent)
+      
+      
+      df_filtered <- df_filtered %>% 
+        group_by(datetime_UTC_roundmin) %>% 
+        filter(row_number() == 1) %>% 
+        ungroup() %>% 
+        select(datetime, battery_percent)
+      
+      remove(df_raw)
+      
+      # Add column to record participant ID
+      df_filtered <- df_filtered %>% 
+        mutate(participant_id = this_id) %>% 
+        select(participant_id, everything())
+      
+      #deduplicate entirely duplicated rows
+      df_filtered <- df_filtered[!duplicated(df_filtered),]
+      
+      list_df_filtered <- append(list_df_filtered, list(df_filtered))
     }
-    
-    remove(df_raw)
-    
-    # Add column to record participant ID
-    df_filtered <- df_filtered %>% 
-      mutate(participant_id = this_id) %>% 
-      select(participant_id, everything())
-    
-    #deduplicate entirely duplicated rows
-    df_filtered <- df_filtered[!duplicated(df_filtered),]
-    
-    list_df_filtered <- append(list_df_filtered, list(df_filtered))
-    
-    # # Add column to record participant ID
-    # df_raw <- df_raw %>% 
-    #   mutate(participant_id = this_id) %>% 
-    #   select(participant_id, everything())
-    # 
-    # #deduplicate entirely duplicated rows
-    # df_raw <- df_raw[!duplicated(df_raw),]
-    # 
-    # list_df_raw <- append(list_df_raw, list(df_raw))
-    }
+  } 
 }
-end_time <- Sys.time()
-end_time - start_time    # Time difference of 30.4 mins                      #old -8.23 mins
+toc()
+# end_time <- Sys.time()
+# end_time - start_time    # Time difference of 30.4 mins                   
 
 list_battery_data_cc2 <- list_df_filtered
 remove(list_df_filtered)
 remove(df_filtered)
 
 
-if(F){save(list_battery_data_cc2,
-     file = file.path("C:/Users/u1330076/Box/Break Free curated data/EMA/Tony - demo/staged", "battery_raw_filtered_data_cc2.RData"))}
+if(T){save(list_battery_data_cc2,
+     file = file.path(path_breakfree_staged_data, "battery_60s_filtered_data_cc2.RData"))}
 
+remove(dat_csv_file_counts_cc2, list_battery_data_cc2)
 
-load(file = file.path("C:/Users/u1330076/Box/Break Free curated data/EMA/Tony - demo/staged", "battery_raw_filtered_data_cc2.RData"))
+# -----------------------------------------------------------------------------
+# lists are saved in the staged folder, so re-run from the lines below
+# -----------------------------------------------------------------------------
 
-
-
+load(file = file.path(path_breakfree_staged_data, "battery_60s_filtered_data_cc1.RData"))
+load(file = file.path(path_breakfree_staged_data, "battery_60s_filtered_data_cc2.RData"))
 
 # -----------------------------------------------------------------------------
 # Combine cc1 and cc2 data and rbind the list into one dataframe ####
@@ -314,82 +334,36 @@ all_battery_data <- all_battery_data %>% semi_join(y = dat_master, by = "partici
 all_battery_data <- all_battery_data  %>% 
   mutate(datetime_hrts_UTC = as.POSIXct(datetime, tz = "UTC", origin="1970-01-01"))
 
-all_battery_data <- all_battery_data %>%
-  group_by(participant_id) %>% 
-  #arrange(datetime) %>% 
-  mutate(lag_diff_secs = datetime - lag(datetime, order_by = datetime)) %>% ungroup
+# all_battery_data <- all_battery_data %>%
+#   group_by(participant_id) %>%  
+#   mutate(lag_diff_secs = datetime - lag(datetime, order_by = datetime)) %>% ungroup
 
-all_battery_data %>% summarise(min_lag=min(replace_na(lag_diff_secs, 0)),
-                               max_lag=max(replace_na(lag_diff_secs, 0)))
-
-all_battery_data %>% select(lag_diff_secs) %>% summary()
-# lag_diff_secs        
-# Min.   :0.000e+00  # I replaced the NAs with 0
-# 1st Qu.:6.000e+01  # 60 seconds
-# Median :6.000e+01  # 60 seconds
-# Mean   :1.906e+04  # 19060 seconds - inflated by extremely large (although infrequent) values. median is better for summary
-# 3rd Qu.:6.000e+01  # 60 seconds
-# Max.   :1.576e+09  
-# NA's   :289 
-
-all_battery_data %>% select(battery_percent) %>% summary #Some had battery % over 100 - need to investigate
-
-all_battery_data %>% filter(battery_percent > 100) %>% View
-
-
-names_w_badvalues <- all_battery_data %>% filter(battery_percent > 100) %>% select(participant_id) %>% unique  # 30 participants; They were all from CC2
-
-all_battery_data %>% filter(participant_id %in% names_w_badvalues$participant_id) %>% View
-
-# 1,919 records have no datetime and their battery percentages are usually out of the scale - will drop those here, but also can change upstream when time filtering
-# Exclusively happening from CC2
-all_battery_data %>% filter(datetime == 0) %>% View  
-
-# Dropping rows with 0 (or really small value; "1.4e-4") datetime
-all_battery_data <- all_battery_data %>% filter(datetime > 1)
-
-names_w_badvalues2 <- all_battery_data %>% filter(battery_percent > 100) %>% select(participant_id) %>% unique  # reduced to 21 participants - 
-
-all_battery_data %>% filter(battery_percent > 100) %>% nrow  # 54 observations with battery over 100% - Not possible; erroneous record
-
-all_battery_data %>% filter(battery_percent < 0) %>% nrow  #65 observations with battery below 0% - Not possible; erroneous record
-
-all_battery_data %>% filter(battery_percent <= 100 & battery_percent >= 0) %>% summary
-
-all_battery_data <- all_battery_data %>% filter(battery_percent <= 100 & battery_percent >= 0)
-
-all_battery_data <- all_battery_data %>%
-  group_by(participant_id) %>% 
-  #arrange(datetime) %>% 
-  mutate(lag_diff_battery_percent = battery_percent - lag(battery_percent, order_by = datetime),
-         lead_diff_battery_percent = lead(battery_percent, order_by = datetime) - battery_percent,
-         lag_battery_percent = lag(battery_percent, order_by = datetime),
-         lead_battery_percent = lead(battery_percent, order_by = datetime)) %>% ungroup
-
-# 54 instances where the battery % decreased by more than 5% from the previous reading, then increased over 5% on the next reading, and the previous time reading was within 90 seconds
-all_battery_data %>% filter(lag_diff_battery_percent < -5 & lead_diff_battery_percent >5 & lag_diff_secs < 90) %>% View() 
-all_battery_data <- all_battery_data %>% filter(!(lag_diff_battery_percent < -5 & lead_diff_battery_percent >5 & lag_diff_secs < 90))
-all_battery_data %>% filter(lag_diff_battery_percent < -5 & lead_diff_battery_percent >5 & lag_diff_secs < 90) %>% View()
-
-
-# Run back through to recalculate the lag and lead
-all_battery_data <- all_battery_data %>%
-  group_by(participant_id) %>% 
-  #arrange(datetime) %>% 
+# # Dropping rows with 0 (or really small value; "1.4e-4") datetime due to erroneous data recordings
+# filtered_battery_data <- all_battery_data %>% filter(datetime > 1)
+# 
+# # Dropping rows with battery percentages greater than 100 or less than 0
+# filtered_battery_data <- filtered_battery_data %>% filter(battery_percent <= 100 & battery_percent >= 0)
+# 
+filtered_battery_data <- all_battery_data %>%
+  group_by(participant_id) %>%
   mutate(lag_diff_secs = datetime - lag(datetime, order_by = datetime),
          lag_diff_battery_percent = battery_percent - lag(battery_percent, order_by = datetime),
          lead_diff_battery_percent = lead(battery_percent, order_by = datetime) - battery_percent,
          lag_battery_percent = lag(battery_percent, order_by = datetime),
          lead_battery_percent = lead(battery_percent, order_by = datetime)) %>% ungroup
 
-# if(F){save(all_battery_data,
-#            file = file.path("C:/Users/u1330076/Box/Break Free curated data/EMA/Tony - demo/staged", "all_battery_data.RData"))}
-# 
+# Dropping instances where the battery % decreased by more than 5% from the previous reading, then increased over 5% on the next reading, and the previous time reading was within 90 seconds
+filtered_battery_data <- filtered_battery_data %>% filter(!(lag_diff_battery_percent < -5 & lead_diff_battery_percent >5 & lag_diff_secs < 90))
 
-filtered_battery_data <- all_battery_data %>% filter(lag_diff_battery_percent != 0) #filter for rows with change in battery percent from the previous (chronologically and grouped per participant id) observation
+# Run back through to recalculate the lag and lead
+filtered_battery_data <- filtered_battery_data %>%
+  group_by(participant_id) %>% 
+  mutate(lag_diff_secs = datetime - lag(datetime, order_by = datetime),
+         lag_diff_battery_percent = battery_percent - lag(battery_percent, order_by = datetime),
+         lead_diff_battery_percent = lead(battery_percent, order_by = datetime) - battery_percent,
+         lag_battery_percent = lag(battery_percent, order_by = datetime),
+         lead_battery_percent = lead(battery_percent, order_by = datetime)) %>% ungroup
 
-# if(F){save(filtered_battery_data,
-#            file = file.path("C:/Users/u1330076/Box/Break Free curated data/EMA/Tony - demo/staged", "filtered_battery_data.RData"))}
-
-if(F){save(filtered_battery_data,
+if(T){save(filtered_battery_data,
            file = file.path(path_breakfree_staged_data, "filtered_battery_data.RData"))}
+toc()

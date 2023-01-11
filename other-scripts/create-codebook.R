@@ -1,6 +1,7 @@
 library(dplyr)
 library(readxl)
 library(testthat)
+library(tibble)
 
 source("paths.R",echo = T)
 load(file = file.path(path_breakfree_staged_data, "masterlist.RData"))
@@ -10,11 +11,55 @@ load(file = file.path(path_breakfree_staged_data, "all_ema_data_D2_per_study_des
 load(file = file.path(path_breakfree_staged_data, "combined_online_puffmarker_episode_data.RData"))
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D3_random_only.RData"))
 
-aggregation_rules <- read.csv(file.path(path_breakfree_other_input_data, "EMA_aggregations_4 read in.csv")) %>% 
-  select(Variables, Aggregation.Method.for.Codebook) %>% rename(vars = Variables, agg_rule = Aggregation.Method.for.Codebook)
+# Updating variable names per CFH Variable Naming Conventions 
+updated_var_names <- read_xlsx(path = file.path(path_breakfree_other_input_data, "BF_Updated_Variable_Names.xlsx")) %>% 
+  select(Original_Variable_Names, Updated_Variable_Names) 
 
-ema_data_all_vars <- tibble(vars = unique(c(names(all_ema_data_D2_per_study_design %>% mutate(extra_ema = NA, .before = extra_ema_on_study_day) %>% 
-                                                    mutate(invalid_end_day = NA, .before = invalid_end_day_on_study_day)), 
+D1_updated_names <- updated_var_names %>% 
+  filter(Original_Variable_Names %in% colnames(all_ema_data_D1_all_delivered)) %>% 
+  select(Updated_Variable_Names, Original_Variable_Names) %>% 
+  deframe
+
+D2_updated_names <- updated_var_names %>% 
+  filter(Original_Variable_Names %in% colnames(all_ema_data_D2_per_study_design)) %>% 
+  select(Updated_Variable_Names, Original_Variable_Names) %>% 
+  deframe
+
+D3_updated_names <- updated_var_names %>% 
+  filter(Original_Variable_Names %in% colnames(all_ema_data_D3_random_only)) %>% 
+  select(Updated_Variable_Names, Original_Variable_Names) %>% 
+  deframe
+
+master_updated_names <- updated_var_names %>% 
+  filter(Original_Variable_Names %in% colnames(dat_master)) %>% 
+  select(Updated_Variable_Names, Original_Variable_Names) %>% 
+  deframe
+
+puffmarker_updated_names <- updated_var_names %>% 
+  filter(Original_Variable_Names %in% colnames(online_puffmarker_episode_data)) %>% 
+  select(Updated_Variable_Names, Original_Variable_Names) %>% 
+  deframe
+
+all_ema_data_D1_all_delivered <- all_ema_data_D1_all_delivered %>% rename( !!! D1_updated_names)
+all_ema_data_D2_per_study_design <- all_ema_data_D2_per_study_design %>% rename( !!! D2_updated_names)
+all_ema_data_D3_random_only <- all_ema_data_D3_random_only %>% rename( !!! D3_updated_names)
+dat_master <- dat_master %>% rename( !!! master_updated_names)
+online_puffmarker_episode_data <- online_puffmarker_episode_data %>% rename ( !!! puffmarker_updated_names)
+
+ema_items_labelled <- ema_items_labelled %>% left_join(y = updated_var_names, by = c("varname_breakfree" = "Original_Variable_Names")) %>% 
+  relocate(Updated_Variable_Names, .after = varname_breakfree) %>% 
+  select(-varname_breakfree) %>% 
+  rename(varname_breakfree = Updated_Variable_Names)
+
+all_ema_data_D1_all_delivered <- all_ema_data_D1_all_delivered %>% select(-time_range_AmerChi_start, -time_range_AmerChi_end)
+all_ema_data_D2_per_study_design <- all_ema_data_D2_per_study_design %>% select(-time_range_AmerChi_start, -time_range_AmerChi_end)
+all_ema_data_D3_random_only <- all_ema_data_D3_random_only %>% select(-time_range_AmerChi_start, -time_range_AmerChi_end)
+
+aggregation_rules <- read.csv(file.path(path_breakfree_other_input_data, "EMA_aggregations_4 read in.csv")) %>% 
+  select(Updated_Variables, Aggregation.Method.for.Codebook) %>% rename(vars = Updated_Variables, agg_rule = Aggregation.Method.for.Codebook)
+
+ema_data_all_vars <- tibble(vars = unique(c(names(all_ema_data_D2_per_study_design %>% mutate(ec_extra_ema = NA, .before = ec_extra_ema_on_day) %>% 
+                                                    mutate(ec_invalid_end_day = NA, .before = ec_invalid_end_day_on_day)), 
                                             names(all_ema_data_D1_all_delivered), names(all_ema_data_D3_random_only))), 
                                           datasource = NA) %>% 
   left_join(y = tibble(vars = names(all_ema_data_D1_all_delivered), all_delivered = TRUE), by = c("vars")) %>% 
@@ -31,13 +76,13 @@ ema_data_all_vars <- tibble(vars = unique(c(names(all_ema_data_D2_per_study_desi
 
 #ema_vars <- tibble(vars = names(all_ema_data_cleaned), datasource = "EMA - All and Random-Only") %>% mutate(id = row_number())
 #ema_vars <- tibble(vars = names(ema_data_curated_drops), datasource = "EMA - All and Random-Only") %>% mutate(id = row_number())
-master_vars <- tibble(vars = names(dat_master %>% relocate(participant_id,cc_indicator, .before = everything())), datasource = "Master") %>% mutate(id = row_number())
+master_vars <- tibble(vars = names(dat_master %>% relocate(participant_id, v_cc_indicator, .before = everything())), datasource = "Master") %>% mutate(id = row_number())
 puff_vars <- tibble(vars = names(online_puffmarker_episode_data), datasource = "Puffmarker")%>% mutate(id = row_number())
 #ema_random_only_vars <- tibble(vars = names(all_ema_data_D3_random_only %>% select(contains("aggreg"))),#, patch_all_records, anhedonia_agg_min, anhedonia_agg_max)),
 #                               datasource = "EMA - Random-Only") %>% mutate(id = row_number())
 
 all_vars1 <- bind_rows(master_vars, puff_vars, ema_data_all_vars) %>% 
-  mutate(datasource = if_else(vars %in% c("participant_id","cc_indicator"), "All", datasource))
+  mutate(datasource = if_else(vars %in% c("participant_id","v_cc_indicator"), "All", datasource))
 
 my_dups <- all_vars1 %>% group_by(vars,datasource) %>% filter(n()>1 & datasource != "All")
 
@@ -142,4 +187,9 @@ if(test1 & test2){
 save(codebook,
      file = file.path(path_breakfree_staged_data, "codebook.RData"))
 
-
+save(dat_master ,file = file.path(path_breakfree_staged_data, "masterlist.RData"))
+save(ema_items_labelled ,file = file.path(path_breakfree_staged_data, "combined_ema_data.RData"))
+save(all_ema_data_D1_all_delivered ,file = file.path(path_breakfree_staged_data, "all_ema_data_D1_all_delivered.RData"))
+save(all_ema_data_D2_per_study_design ,file = file.path(path_breakfree_staged_data, "all_ema_data_D2_per_study_design.RData"))
+save(online_puffmarker_episode_data ,file = file.path(path_breakfree_staged_data, "combined_online_puffmarker_episode_data.RData"))
+save(all_ema_data_D3_random_only ,file = file.path(path_breakfree_staged_data, "all_ema_data_D3_random_only.RData"))

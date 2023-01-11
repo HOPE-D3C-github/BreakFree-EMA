@@ -249,7 +249,8 @@ all_ema_data_cleaned <- all_ema_data_cleaned %>% mutate(
 # ----------------------------------------------------------------
 all_ema_data_cleaned <- all_ema_data_cleaned %>% 
   rename(block_calc = block,
-         percent_time_battery_at_no_data = percent_time_battery_at_no_battery_data)
+         percent_time_battery_at_no_data = percent_time_battery_at_no_battery_data) #%>% 
+  #select(-battery_time_duration_minutes)
 
 all_ema_data_cleaned_v2 <- all_ema_data_cleaned %>% 
   mutate(status = toupper(status),
@@ -279,11 +280,53 @@ all_ema_data_cleaned_v4 <- all_ema_data_cleaned_v3 %>%
     T ~ multi_day_start_on_study_day
   ))
 
- 
+# ---------------------------------------------------------------
+# Updating Block Level Status into a compound status and 
+# aggregating similar statuses
+# ---------------------------------------------------------------
+if(T){
+  all_ema_data_cleaned_v5 <- all_ema_data_cleaned_v4 %>% ungroup() %>% 
+    mutate(
+      status = case_when(
+        status %in% c("ABANDONED_BY_USER", "CANCEL") ~ "NOTIFICATION-CANCELLED",
+        status == "ABANDONED_BY_TIMEOUT" & with_any_response ~ "EMA-PARTIALLY_COMPLETE",
+        status == "ABANDONED_BY_TIMEOUT" & !with_any_response ~ "EMA-NO_RESPONSES",
+        status == "COMPLETED" ~ "EMA-COMPLETE",
+        status == "MISSED" ~ "NOTIFICATION-MISSED",
+        T ~ status
+        ),
+      undelivered_rsn = case_when(
+        undelivered_rsn %in% c("Battery Insufficient", "Low Battery", "Poor Data Quality And Battery Insufficient") ~ "Insufficient Battery",
+        undelivered_rsn == "Unknown Cause" ~ "Unidentified Cause",
+        T ~ undelivered_rsn
+      )
+    )
+  
+  all_ema_data_cleaned_v6 <- all_ema_data_cleaned_v5 %>% 
+    mutate(
+      ema_delivered = as.integer(status != "UNDELIVERED"),
+      status = case_when(
+        status == "UNDELIVERED" ~ paste0("UNDELIVERED-", toupper(str_replace_all(undelivered_rsn, pattern = " ", "_"))),
+        T ~ status
+      )
+    )
+  
+  all_ema_data_cleaned_v7 <- all_ema_data_cleaned_v6 %>% 
+    select(-undelivered_rsn, -conditions_stream_summary, -battery_stream_summary, -participant_id_bat, -battery_status,
+           -percent_time_battery_at_10_100, -percent_time_battery_at_0_10, -percent_time_battery_at_no_data)
+  
+  all_ema_data_cleaned_final <- all_ema_data_cleaned_v7
+  
+} else{
+  all_ema_data_cleaned_final <- all_ema_data_cleaned_v4
+}
+
+
+
 # ----------------------------------------------------------------
 
 # Reposition columns
-all_ema_data_D1_all_delivered <- all_ema_data_cleaned_v3 %>% 
+all_ema_data_D1_all_delivered <- all_ema_data_cleaned_final %>% 
   relocate(begin_hrts_UTC, end_hrts_UTC, time_software_calc, day_start_hrts_AmericaChicago, time_range_AmerChi_start, time_range_AmerChi_end,
            block_start_hrts_AmericaChicago, block_end_hrts_AmericaChicago, extra_ema,
            extra_ema_on_study_day, multi_day_start, multi_day_start_on_study_day,

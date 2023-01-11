@@ -77,7 +77,7 @@ block_level_block_calc_tall <- df_shell
 # For loop to break out the wide dataset into tall with block numbers calculated
 for (i in 1:nrow(block_level_block_calc_wide)){
   row_i <- block_level_block_calc_wide %>% slice(i)
-  if (!is.na(row_i$block_1_end_dt)){
+
     block_1_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
                                         study_day_start_date = row_i$study_day_start_date,
                                         day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
@@ -88,55 +88,50 @@ for (i in 1:nrow(block_level_block_calc_wide)){
                                         multi_day_start = case_when(row_i$extra_day_start_block_number == 1 ~ TRUE,
                                                                     T ~ F))
     block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_1_row)
-    
-    if (!is.na(row_i$block_2_end_dt)){
-      block_2_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
-                                          study_day_start_date = row_i$study_day_start_date,
-                                          day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
-                                          day_end_hrts = row_i$day_end_hrts,
-                                          block_start_hrts_AmericaChicago = row_i$block_1_end_dt,
-                                          block_end_hrts_AmericaChicago = row_i$block_2_end_dt,
-                                          block_calc = "2",
-                                          multi_day_start = case_when(row_i$extra_day_start_block_number <= 2 ~ TRUE,
-                                                                      T ~ F))
-      block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_2_row)
+
+    block_2_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
+                                        study_day_start_date = row_i$study_day_start_date,
+                                        day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
+                                        day_end_hrts = row_i$day_end_hrts,
+                                        block_start_hrts_AmericaChicago = row_i$block_1_end_dt,
+                                        block_end_hrts_AmericaChicago = row_i$block_2_end_dt,
+                                        block_calc = "2",
+                                        multi_day_start = case_when(row_i$extra_day_start_block_number <= 2 ~ TRUE,
+                                                                    T ~ F))
+    block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_2_row)
       
-      if (!is.na(row_i$block_3_end_dt)){
-        block_3_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
-                                            study_day_start_date = row_i$study_day_start_date,
-                                            day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
-                                            day_end_hrts = row_i$day_end_hrts,
-                                            block_start_hrts_AmericaChicago = row_i$block_2_end_dt,
-                                            block_end_hrts_AmericaChicago = row_i$block_3_end_dt,
-                                            block_calc = "3",
-                                            multi_day_start = case_when(row_i$extra_day_start_block_number <= 3 ~ TRUE,
-                                                                        T ~ F))
-        block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_3_row)
+    block_3_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
+                                        study_day_start_date = row_i$study_day_start_date,
+                                        day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
+                                        day_end_hrts = row_i$day_end_hrts,
+                                        block_start_hrts_AmericaChicago = row_i$block_2_end_dt,
+                                        block_end_hrts_AmericaChicago = row_i$block_3_end_dt,
+                                        block_calc = "3",
+                                        multi_day_start = case_when(row_i$extra_day_start_block_number <= 3 ~ TRUE,
+                                                                    T ~ F))
+    block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_3_row)
         
-        if (!is.na(row_i$block_4_end_dt)){
-          block_4_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
-                                              study_day_start_date = row_i$study_day_start_date,
-                                              day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
-                                              day_end_hrts = row_i$day_end_hrts,
-                                              block_start_hrts_AmericaChicago = row_i$block_3_end_dt,
-                                              block_end_hrts_AmericaChicago = row_i$block_4_end_dt,
-                                              block_calc = "4",
-                                              multi_day_start = case_when(row_i$extra_day_start_block_number <= 4 ~ TRUE,
-                                                                          T ~ F))
-          block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_4_row)
-        }
-      }
-    }
-  }
+    block_4_row <- df_shell %>% add_row(participant_id = row_i$participant_id,
+                                        study_day_start_date = row_i$study_day_start_date,
+                                        day_start_hrts_AmericaChicago = row_i$day_start_hrts_AmericaChicago,
+                                        day_end_hrts = row_i$day_end_hrts,
+                                        block_start_hrts_AmericaChicago = row_i$block_3_end_dt,
+                                        block_end_hrts_AmericaChicago = row_i$block_4_end_dt,
+                                        block_calc = "4",
+                                        multi_day_start = case_when(row_i$extra_day_start_block_number <= 4 ~ TRUE,
+                                                                    T ~ F))
+    block_level_block_calc_tall <- block_level_block_calc_tall %>% add_row(block_4_row)
 }
 
 block_level_block_calc_tall <- block_level_block_calc_tall[!duplicated(block_level_block_calc_tall),]
 
 # ------------------------------------------------------------------------------------------
 # Join the block_level_block_calc_tall data with the preprocessed ema data with block calcs
+#
+# join by: participant / day / block
 # ------------------------------------------------------------------------------------------
 
-block_level_ema_dataset <- full_join(block_level_block_calc_tall, all_ema_data_wblocks_cc1, by = c("participant_id", "day_start_hrts_AmericaChicago", "block_calc"))
+block_level_ema_dataset <- full_join(x = block_level_block_calc_tall, y = all_ema_data_wblocks_cc1, by = c("participant_id", "day_start_hrts_AmericaChicago", "block_calc"))
 
 
 # -----------------------------------------------------------------------------------------
@@ -144,34 +139,24 @@ block_level_ema_dataset <- full_join(block_level_block_calc_tall, all_ema_data_w
 #   - Differentiate between these three cases:
 #        A. Block occured after the "end of day" button was pressed - "Not Sent - After End of Day"
 #        B. End of Day button pressed within the block 
-#        C. All else - "Not sent - Study Plan Noncompliance"
+#        C. All else - "Not sent - Study Plan Noncompliance"  # study plan noncompliance later updated to "software blocked delivery"
 #
 # And impute other variable values for blocks without EMAs
 # -----------------------------------------------------------------------------------------
 
 block_level_ema_dataset <- block_level_ema_dataset %>% 
   mutate(status = case_when(
-   !is.na(status) ~ status,
-   day_end_hrts < block_start_hrts_AmericaChicago.x ~ "UNDELIVERED - AFTER END OF DAY",
-   day_end_hrts > block_start_hrts_AmericaChicago.x & day_end_hrts <= block_end_hrts_AmericaChicago.x ~ "UNDELIVERED - END OF DAY DURING BLOCK",
-   T ~ "UNDELIVERED - STUDY PLAN NONCOMPLIANCE"),
-   ema_type = case_when(
-     !is.na(ema_type) ~ ema_type,
-     T ~ "RANDOM"),
-   cc_indicator = 1,
-   block_start_hrts_AmericaChicago.y = case_when(
-     !is.na(block_start_hrts_AmericaChicago.y) ~ block_start_hrts_AmericaChicago.y,
-     T ~ block_start_hrts_AmericaChicago.x),
-   block_end_hrts_AmericaChicago.y = case_when(
-     !is.na(block_end_hrts_AmericaChicago.y) ~ block_end_hrts_AmericaChicago.y,
-     T ~ block_end_hrts_AmericaChicago.x),
-   multi_day_start.y = case_when(
-     !is.na(multi_day_start.y) ~ multi_day_start.y,
-     T ~ multi_day_start.x),
-   extra_ema = case_when(
-     !is.na(extra_ema) ~ extra_ema,
-     T ~ FALSE)
-   )
+    !is.na(status) ~ status,
+    day_end_hrts < block_start_hrts_AmericaChicago.x ~ "UNDELIVERED - AFTER END OF DAY",
+    day_end_hrts > block_start_hrts_AmericaChicago.x & day_end_hrts <= block_end_hrts_AmericaChicago.x ~ "UNDELIVERED - END OF DAY DURING BLOCK",
+    T ~ "UNDELIVERED - STUDY PLAN NONCOMPLIANCE"),
+    ema_type = coalesce(ema_type, "RANDOM"),
+    cc_indicator = 1,
+    block_start_hrts_AmericaChicago.y = coalesce(block_start_hrts_AmericaChicago.y, block_start_hrts_AmericaChicago.x),
+    block_end_hrts_AmericaChicago.y = coalesce(block_end_hrts_AmericaChicago.y, block_end_hrts_AmericaChicago.x),
+    multi_day_start.y = coalesce(multi_day_start.y, multi_day_start.x),
+    extra_ema = coalesce(extra_ema, FALSE)
+  )
 
 block_level_ema_dataset <- block_level_ema_dataset %>% 
   arrange(participant_id, ymd_hms(day_start_hrts_AmericaChicago)) %>% 
@@ -248,7 +233,7 @@ if(F){view(full_block_level_ema_dataset)}
 # will be the time_software_calc
 
 
-full_block_level_ema_dataset_prebatt_v1 <- full_block_level_ema_dataset %>% 
+full_block_level_ema_dataset_prebatt_v1 <- full_block_level_ema_dataset %>% filter(!is.na(study_day_int)) %>% group_by(participant_id) %>%
   mutate(
   time_range_AmerChi_start = case_when(
     !is.na(time_software_calc) ~ time_software_calc,
@@ -288,7 +273,7 @@ full_block_level_ema_dataset_prebatt_v1 <- full_block_level_ema_dataset %>%
 
 # Fill in start and end time ranges for continuous durations
 for (i in 1:nrow(full_block_level_ema_dataset_prebatt_v1)){
-  print(i)
+  #print(i)
   i_time_range_AmerChi_end <- full_block_level_ema_dataset_prebatt_v1$time_range_AmerChi_end[i]
   if (is.na(i_time_range_AmerChi_end)){
     x <- 0
@@ -338,10 +323,10 @@ full_block_ema_w_battery_v1 <- full_block_ema_w_battery_v1  %>%
 full_block_ema_w_battery_v1 %>% count(is.na(participant_id_bat))
 
 
-full_block_ema_w_battery_v2 <- full_block_ema_w_battery_v1 %>% 
+full_block_ema_w_battery_v2 <- full_block_ema_w_battery_v1 %>%  #full_block_ema_w_battery_v1_testing %>% 
   mutate(
     battery_status = case_when(
-      is.na(battery_status) ~ "No Battery Data",
+      is.na(battery_status) ~ "No Participant Battery Data",
       T ~ battery_status)
   ) %>% 
   group_by(participant_id, study_date, block, end_hrts_AmericaChicago) %>% 
@@ -393,7 +378,8 @@ full_block_ema_w_battery_v3 <- full_block_ema_w_battery_v2 %>%
   ) %>% 
   filter(row_number() == 1) %>% 
   ungroup() %>% 
-  select(-participant_id_bat, -battery_unix_datetime_start, -battery_unix_datetime_end, -battery_hrts_AmerChi_start,
+  select(#-participant_id_bat,
+         -battery_unix_datetime_start, -battery_unix_datetime_end, -battery_hrts_AmerChi_start,
          -battery_hrts_AmerChi_end, -battery_hrts_UTC_start, -battery_hrts_UTC_end, -time_in_battery_range_mins, 
          -time_mins_10_100, -time_mins_0_10, -time_mins_no_battery_data, -time_10_100_all, -time_0_10_all, 
          -time_no_battery_data_all, -block_time_mins, -sum_percent, #-time_range_AmerChi_start, -time_range_AmerChi_end
@@ -441,6 +427,7 @@ full_block_ema_w_battery_v3 <- full_block_ema_w_battery_v2 %>%
       is.na(status) & battery_status == "10-100%" ~ "UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE",
       is.na(status) & percent_time_battery_at_no_battery_data > 0 & percent_time_battery_at_no_battery_data < 100 ~ "UNDELIVERED - PARTIALLY MISSING BATTERY DATA",
       is.na(status) & percent_time_battery_at_no_battery_data == 0 & percent_time_battery_at_0_10 > 0 ~ "UNDELIVERED - PARTIALLY LOW BATTERY",
+      is.na(status) & battery_status %in% c("Before Battery Data Collection Began", "After Battery Data Collection Ended", "No Participant Battery Data") ~ "UNDELIVERED - INSUFFICIENT BATTERY DATA",
       T ~ status), 
     with_any_response = case_when(
       is.na(with_any_response) ~ 0,
@@ -581,11 +568,11 @@ full_block_ema_w_battery_log_phone_cc1_v2 %>% filter(participant_id != "3115" &
                    "UNDELIVERED - NO BATTERY DATA", "UNDELIVERED - NO DAY START")) %>% 
   count(status_log, VALID_BLOCK.VALID_BLOCK_RANDOM_EMA..STATUS_log)  
   
-full_block_ema_w_battery_log_phone_cc1_v2 %>% filter(participant_id != "3115" &
+if(F){full_block_ema_w_battery_log_phone_cc1_v2 %>% filter(participant_id != "3115" &
                                                        status %in% c("UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE", "UNDELIVERED - PARTIALLY LOW BATTERY", "UNDELIVERED - PARTIALLY MISSING BATTERY DATA",
                                                                      "UNDELIVERED - AFTER END OF DAY", "UNDELIVERED - END OF DAY DURING BLOCK", "UNDELIVERED - LOW BATTERY", 
                                                                      "UNDELIVERED - NO BATTERY DATA", "UNDELIVERED - NO DAY START")) %>% 
-  filter(status_log == "ABANDONED_BY_TIMEOUT") %>% View()
+  filter(status_log == "ABANDONED_BY_TIMEOUT") %>% View()}
 
 # ---------------------------------------------------------------------------------------
 # Merge the dataset with the start and end dates from dat_master,
@@ -606,7 +593,7 @@ full_block_ema_w_battery_log_phone_cc1_v4 <- full_block_ema_w_battery_log_phone_
 # ----------------------------------------------------------------------------------------
 # Start aggregating log status info 
 #
-# Currently, one EMA could repeat for each corresponding log status 
+# Currently, an EMA record could repeat for each corresponding log status (one to many)
 # ----------------------------------------------------------------------------------------
 
 ema_blocklevel_w_log_v1 <-  full_block_ema_w_battery_log_phone_cc1_v4
@@ -627,7 +614,10 @@ if(F){ema_blocklevel_w_log_v1 %>%
   View()}
 
 if(TRUE){
-  ema_blocklevel_w_log_v2 <- ema_blocklevel_w_log_v1 %>% mutate(current_time_hrts_AmericaChicago_log = as.character(current_time_hrts_AmericaChicago_log)) %>% group_by(participant_id, ema_type, study_day_int, block, end_hrts_AmericaChicago, status)
+  ema_blocklevel_w_log_v2 <- ema_blocklevel_w_log_v1 %>% 
+    mutate(current_time_hrts_AmericaChicago_log = as.character(current_time_hrts_AmericaChicago_log)) %>% 
+    group_by(participant_id, ema_type, study_day_int, block, end_hrts_AmericaChicago, status)
+  
   for (variable in colnames(ema_blocklevel_w_log_v2)){
     if (str_ends(variable, pattern = "_log")){
       varname = paste0(variable, "_agg")    # Create name of the aggregated variable
@@ -646,6 +636,7 @@ if(TRUE){
 log_status_colnames <- colnames(ema_blocklevel_w_log_v3)[str_ends(colnames(ema_blocklevel_w_log_v3), pattern = "..STATUS_log_agg")]
 
 ema_blocklevel_w_log_v4 <- ema_blocklevel_w_log_v3 %>% mutate(log_statuses_w_false = NA_character_, .after = status_log_agg)
+
 for (i in 1:nrow(ema_blocklevel_w_log_v4)){
   row_i_status_vars <- ema_blocklevel_w_log_v4 %>% select(all_of(log_status_colnames)) %>% slice(i)
   log_status_colnames_w_false = log_status_colnames[which(row_i_status_vars == "false")]
@@ -657,12 +648,15 @@ for (i in 1:nrow(ema_blocklevel_w_log_v4)){
 
 ema_blocklevel_w_log_v5 <- ema_blocklevel_w_log_v4 %>% 
   mutate(undelivered_log_reason = case_when(
-    !undelivered ~ NA_character_,
+    # ----------------------------
+    # Testing to see data concordance for conditions and delivered EMAs
+    #!undelivered ~ NA_character_,
+    # ----------------------------
     log_statuses_w_false == "DATA_QUALITY.DATA_QUALITY_5..STATUS_log_agg" ~ "Poor Data Quality",
-    log_statuses_w_false == "VALID_BLOCK.VALID_BLOCK_RANDOM_EMA..STATUS_log_agg" ~ "Invalid Block",
+    log_statuses_w_false == "VALID_BLOCK.VALID_BLOCK_RANDOM_EMA..STATUS_log_agg" ~ "INVALID BLOCK",
     log_statuses_w_false == "NOT_DRIVING.NOT_DRIVING_5..STATUS_log_agg" ~ "Driving",
-    log_statuses_w_false == "PHONE_BATTERY.PHONE_BATTERY_10..STATUS_log_agg" ~ "Insufficient Phone Battery",
-    log_statuses_w_false == "c(\"DATA_QUALITY.DATA_QUALITY_5..STATUS_log_agg\", \"PHONE_BATTERY.PHONE_BATTERY_10..STATUS_log_agg\")" ~ "Poor Data Quality and Insufficient Phone Battery",
+    log_statuses_w_false == "PHONE_BATTERY.PHONE_BATTERY_10..STATUS_log_agg" ~ "Battery Insufficient",
+    log_statuses_w_false == "c(\"DATA_QUALITY.DATA_QUALITY_5..STATUS_log_agg\", \"PHONE_BATTERY.PHONE_BATTERY_10..STATUS_log_agg\")" ~ "Poor Data Quality and Battery Insufficient",
     log_statuses_w_false == "c(\"DATA_QUALITY.DATA_QUALITY_5..STATUS_log_agg\", \"NOT_DRIVING.NOT_DRIVING_5..STATUS_log_agg\")" ~ "Poor Data Quality and Driving",
     unixtime_log_agg == 'character(0)' ~ paste("Unknown Cause - Missing Data: No Corresponding Conditions Data", 
                                                str_split_fixed(status, pattern = " - ", n = 2)[,2], sep = " - "),
@@ -687,7 +681,7 @@ if(F){ema_blocklevel_w_log_v5 %>%
 ema_blocklevel_w_log_v6 <- ema_blocklevel_w_log_v5 %>% 
   mutate(status = case_when(
     !undelivered ~ status,
-    !(status %in% c('UNDELIVERED - PARTIALLY LOW BATTERY', 'UNDELIVERED - PARTIALLY MISSING BATTERY DATA', 'UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE')) ~ status,
+    !(status %in% c('UNDELIVERED - PARTIALLY LOW BATTERY', 'UNDELIVERED - PARTIALLY MISSING BATTERY DATA', 'UNDELIVERED - SUFFICIENT BATTERY / OTHER CAUSE', 'UNDELIVERED - INSUFFICIENT BATTERY DATA')) ~ status,
     str_detect(undelivered_log_reason, pattern = "Undetermined") ~ paste(status, undelivered_log_reason, sep = " - "), 
     T ~ paste0("UNDELIVERED - ", undelivered_log_reason)
   ))

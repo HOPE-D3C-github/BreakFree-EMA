@@ -27,14 +27,14 @@ write.csv(ema_items_labelled, file.path(path_breakfree_output_data_4dm, "ema_ite
 # -----------------------------------------------------------------------------
 # EMA skip logic issues - output 4 data managers only
 # -----------------------------------------------------------------------------
-load(file = file.path(path_breakfree_staged_data, "combined_ema_data_clean.RData"))
-write.csv(conditions_applied_simple, file.path(path_breakfree_output_data_4dm, "skip_logic_errors_summary.csv"), row.names = FALSE, na = "")
-
-# [Begin] Tony's addition
-write.csv(unedited_and_clean_ema_vars_dat, file.path(path_breakfree_output_data_4dm, "unedited_and_clean_ema_vars.csv"), row.names = FALSE, na = "")
-saveRDS(object = unedited_and_clean_ema_vars_dat, file = file.path(path_breakfree_output_data_4dm, "unedited_and_clean_ema_vars.rds"))  # R/python users
-write_dta(data = unedited_and_clean_ema_vars_dat, path = file.path(path_breakfree_output_data_4dm, "unedited_and_clean_ema_vars.dta"))  # Stata/SAS users
-# [End] Tony's addition
+# load(file = file.path(path_breakfree_staged_data, "combined_ema_data_clean.RData"))
+# write.csv(conditions_applied_simple, file.path(path_breakfree_output_data_4dm, "skip_logic_errors_summary.csv"), row.names = FALSE, na = "")
+# 
+# # [Begin] Tony's addition
+# write.csv(unedited_and_clean_ema_vars_dat, file.path(path_breakfree_output_data_4dm, "unedited_and_clean_ema_vars.csv"), row.names = FALSE, na = "")
+# saveRDS(object = unedited_and_clean_ema_vars_dat, file = file.path(path_breakfree_output_data_4dm, "unedited_and_clean_ema_vars.rds"))  # R/python users
+# write_dta(data = unedited_and_clean_ema_vars_dat, path = file.path(path_breakfree_output_data_4dm, "unedited_and_clean_ema_vars.dta"))  # Stata/SAS users
+# # [End] Tony's addition
 
 # -----------------------------------------------------------------------------
 # EMA Dataset #1 - all delivered EMAs
@@ -102,6 +102,7 @@ online_puffmarker_episode_data %>%
 load(file = file.path(path_breakfree_staged_data, "codebook.Rdata"))
 
 saveRDS(object = codebook, file = file.path(path_breakfree_output_data, "codebook.rds"))  # R/python users
+
 codebook %>% rename_all(~str_replace_all(.," ","_")) %>% write_dta(data = ., path = file.path(path_breakfree_output_data, "codebook.dta"))  # Stata/SAS users
 
 # General users
