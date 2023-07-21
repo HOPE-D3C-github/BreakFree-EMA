@@ -6,6 +6,7 @@ library(stringr)
 source("paths.R",echo = T)
 
 load(file = file.path(path_breakfree_staged_data, "combined_ema_data.RData"))
+load(file.path(path_breakfree_staged_data, 'masterlist.RData'))
 
 ##################################################################
 ### Recalculate timing of EMA vars and flag any discrepancies
@@ -336,6 +337,24 @@ all_ema_data_D1_all_delivered <- all_ema_data_cleaned_final %>%
   relocate(begin_hrts_AmericaChicago, end_hrts_AmericaChicago, .before = ema_type)
 
 
+# ---------------------------------------------------------------
+# Update undelivered reason for participants without any EMA data
+# ---------------------------------------------------------------
+all_ema_data_D1_all_delivered_test <- all_ema_data_D1_all_delivered %>% 
+  left_join(dat_master %>% select(participant_id, in_ematimes),
+            by = "participant_id") %>% 
+  mutate(status = case_when(
+    !in_ematimes ~ "UNDELIVERED-PT_NO_EMA_ENTIRE_STUDY",
+    T ~ status
+  )) %>% 
+  select(-in_ematimes)
+
+dat_master <- dat_master %>% select(-"in_ematimes")
+
+# ---------------------------------------------------------------
+# Save data
+# ---------------------------------------------------------------
 save(all_ema_data_D1_all_delivered,conditions_applied_simple, unedited_and_clean_ema_vars_dat,
      file = file.path(path_breakfree_staged_data, "all_ema_data_D1_all_delivered.RData"))
 
+save(dat_master, file = file.path(path_breakfree_staged_data, "masterlist.RData"))

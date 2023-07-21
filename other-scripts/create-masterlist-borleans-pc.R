@@ -21,16 +21,17 @@ options(warn = default_warning_setting)
 ### Tonys updates to import the curated v1 and enrolled dataset
 file.copy(file.path(path_breakfree_visit_summary_input_data, "data_all.rds"), path_breakfree_other_input_data, overwrite = TRUE)
 dat_curated_dates <- readRDS(file = file.path(path_breakfree_other_input_data, "data_all.rds")) %>% filter(enrolled == TRUE) %>% 
-  select(participant_id, ID_RSR, ID_enrolled, cc_indicator, eligible_scr, enrolled, in_ematimes = status_calc_beganema,
+  select(participant_id, ID_RSR, ID_enrolled, cc_indicator, eligible_scr, enrolled, 
          #in_ematimes, We verified this is true for everyone so we don't need this variable. In future pipelines we should double check that we have EMA data for everyone in this dataset
          v1_date_calc, v1_attend_calc, v2_date_calc, v2_attend_ind_calc, v3_date_calc, v3_attend_ind_calc, v4_date_calc, v4_attend_ind_calc, withdrew_calc, withdrew_date_calc) %>% 
+  #this is us using our calculated dates to determine visit dates that influence EMA pipeline
     rename(v1_date = v1_date_calc, v1_attend = v1_attend_calc,
            v2_date = v2_date_calc, v2_attend = v2_attend_ind_calc,
            v3_date = v3_date_calc, v3_attend = v3_attend_ind_calc,
            v4_date = v4_date_calc, v4_attend = v4_attend_ind_calc,
            withdrew = withdrew_calc, withdrew_date = withdrew_date_calc)
 
-dat_master <- dat_curated_dates %>% select(participant_id, ID_enrolled, ID_RSR, cc_indicator, in_ematimes, v1_date, v1_attend, v2_date,
+dat_master <- dat_curated_dates %>% select(participant_id, ID_enrolled, ID_RSR, cc_indicator, v1_date, v1_attend, v2_date,
                                            v2_attend, v3_date, v3_attend, v4_date, v4_attend, withdrew, withdrew_date) %>%
   mutate(begin_date_ema_data_collection = v1_date)
 
@@ -39,6 +40,7 @@ dat_master <- dat_master %>% arrange(cc_indicator, participant_id)
 
 # Now, construct time variables
 dat_master <- dat_master %>%
+  #sets TZ to central in the background, but time of day doesn't change.
   mutate(first_day_hrts_AmericaChicago = force_tz(begin_date_ema_data_collection, tzone = "America/Chicago"),
          first_day_date = as_date(first_day_hrts_AmericaChicago))
 
@@ -69,7 +71,7 @@ dat_master <- dat_master %>%
 # Clean up data frame
 dat_master <- dat_master %>% 
   select(-begin_date_ema_data_collection) %>%
-  select(ID_RSR, ID_enrolled, participant_id, cc_indicator, in_ematimes, withdrew, withdrew_date, 
+  select(ID_RSR, ID_enrolled, participant_id, cc_indicator, withdrew, withdrew_date, 
          first_day_date, last_day_date,
          quit_day_unixts, quit_day_hrts_UTC, quit_day_hrts_AmericaChicago,
         v1_date, v1_attend, v2_date, v2_attend, v3_date, v3_attend, v4_date, v4_attend)
