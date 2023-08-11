@@ -46,7 +46,7 @@ all_ema_data_D3_random_only <- all_ema_data_D3_random_only %>% rename( !!! D3_up
 dat_master <- dat_master %>% rename( !!! master_updated_names)
 online_puffmarker_episode_data <- online_puffmarker_episode_data %>% rename ( !!! puffmarker_updated_names)
 
-ema_items_labelled <- ema_items_labelled %>% left_join(y = updated_var_names, by = c("varname_breakfree" = "Original_Variable_Names")) %>% 
+ema_items_labelled <- ema_items_labelled %>% left_join(y = updated_var_names, by = c("varname_desc" = "Original_Variable_Names")) %>% 
   relocate(Updated_Variable_Names, .after = varname_breakfree) %>% 
   select(-varname_breakfree) %>% 
   rename(varname_breakfree = Updated_Variable_Names)
