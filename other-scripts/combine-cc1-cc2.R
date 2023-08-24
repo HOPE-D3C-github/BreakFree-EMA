@@ -2,6 +2,7 @@ library(dplyr)
 library(readxl)
 library(stringr)
 library(tidyr)
+library(lubridate)
 
 source("paths.R",echo = T)
 
@@ -161,6 +162,12 @@ non_ema_vars <- setdiff(names(all_ema_data),ema_items_labelled$varname_breakfree
 all_ema_data <- all_ema_data %>% 
   #reorder columns
   select(all_of(c(non_ema_vars,ema_items_labelled$varname_breakfree)))
+
+all_ema_data <- all_ema_data %>% 
+  mutate(
+    begin_hrts_AmericaChicago = as_datetime(begin_unixts, tz = "America/Chicago"),
+    end_hrts_AmericaChicago = as_datetime(end_unixts, tz = "America/Chicago")
+  )
 
 save(all_ema_data, ema_items_labelled,
      file = file.path(path_breakfree_staged_data, "combined_ema_data.RData"))

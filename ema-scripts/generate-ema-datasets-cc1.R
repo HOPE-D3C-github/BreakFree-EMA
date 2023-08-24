@@ -83,7 +83,7 @@ all_ema_data <- all_ema_data %>%
             by = "participant_id") %>%
   filter(as_date(end_hrts_AmericaChicago) >= first_day_date) %>%  
   filter(as_date(end_hrts_AmericaChicago) <= last_day_date_w_withdrew) %>%   # right censoring after withdrew date if its before the last day date
-  #filter(as_date(end_hrts_AmericaChicago) <= last_day_date) %>%  # This right censors only on last_day_date
+  #filter(as_date(end_hrts_AmericaChicago) <= v_last_day_date) %>%  # This right censors only on v_last_day_date
   select(-first_day_date, -last_day_date_w_withdrew, -last_day_date) %>%
   select(participant_id, cc_indicator, everything()) %>% 
   arrange(participant_id, end_unixts)
