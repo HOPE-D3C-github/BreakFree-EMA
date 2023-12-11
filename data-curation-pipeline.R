@@ -68,6 +68,9 @@ rm(list = ls())
 source(file.path("other-scripts","create-codebook.R"))
 rm(list = ls())
 
+source(file.path("ema-scripts","create-ema-datasets-with-integers.R"))
+rm(list = ls())
+
 source(file.path("other-scripts","output-formatted-database.R"))
 rm(list = ls())
 

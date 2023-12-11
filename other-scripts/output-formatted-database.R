@@ -66,6 +66,17 @@ all_ema_data_D2_per_study_design %>%
   mutate(across(contains("hrts"), ~format(., format = "%Y-%m-%d %H:%M:%S"))) %>%
   write.csv(x = ., file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design.csv"), row.names = FALSE, na = "")
 
+### Integer values version
+load(file = file.path(path_breakfree_staged_data, "all_ema_data_D2_per_study_design_integers.RData"))
+
+saveRDS(object = all_ema_data_D2_per_study_design_integers, file = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.rds"))  # R/python users
+write_dta(data = all_ema_data_D2_per_study_design_integers, path = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.dta"))  # Stata/SAS users
+
+# General users
+all_ema_data_D2_per_study_design_integers %>%
+  mutate(across(contains("hrts"), ~format(., format = "%Y-%m-%d %H:%M:%S"))) %>%
+  write.csv(x = ., file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.csv"), row.names = FALSE, na = "")
+
 # -----------------------------------------------------------------------------
 # EMA Dataset #3 - Random Only EMA
 #
@@ -80,6 +91,16 @@ all_ema_data_D3_random_only %>%
   mutate(across(contains("hrts"), ~format(., format = "%Y-%m-%d %H:%M:%S"))) %>%
   write.csv(x = ., file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema.csv"), row.names = FALSE, na = "")
 
+
+### Integer values version
+load(file = file.path(path_breakfree_staged_data, "all_ema_data_D3_random_only_integers.Rdata"))
+
+saveRDS(object = all_ema_data_D3_random_only_integers, file = file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema_integers.rds"))  # R/python users
+write_dta(data = all_ema_data_D3_random_only_integers, path = file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema_integers.dta"))  # Stata/SAS users
+
+all_ema_data_D3_random_only_integers %>% 
+  mutate(across(contains("hrts"), ~format(., format = "%Y-%m-%d %H:%M:%S"))) %>%
+  write.csv(x = ., file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema_integers.csv"), row.names = FALSE, na = "")
 
 # -----------------------------------------------------------------------------
 # For CC1 & CC2:
