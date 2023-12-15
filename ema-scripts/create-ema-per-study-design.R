@@ -419,8 +419,8 @@ test2 <- test_that(desc = "If *_ago has value, then the corresponding *_first an
 
 
 #### Visual QC A. Check that the "Aggregate All" compound values are as desired
-if(F){ema_data_per_study_design3 %>% select(othertob_which_v1) %>% unique()}
-if(F){ema_data_per_study_design3 %>% select(othertob_which_v2) %>% unique()}
+# if(F){ema_data_per_study_design3 %>% select(othertob_which_v1) %>% unique()}
+# if(F){ema_data_per_study_design3 %>% select(othertob_which_v2) %>% unique()}
 
 
 all_ema_data_D2_per_study_design <- ema_data_per_study_design3 %>% select(-extra_ema, -invalid_end_day)
