@@ -92,28 +92,28 @@ for (i in 1:ncol(all_ema_data_D2_per_study_design)){
     # Will need to treat the multiple select options differently
     vector_i_char <- all_ema_data_D2_per_study_design[,i]
     cw_var_i <- df_updated_responses_cw %>% filter(Variables == var_i)
-    if(replace_na(cw_var_i$question_type[1] != "multiple_select", T)){ 
+    # if(replace_na(cw_var_i$question_type[1] != "multiple_select", T)){ 
       # If the response options were not multiple select, then we can convert value labels to integers using a join
-      df_i <- vector_i_char %>% 
-        left_join(y = cw_var_i %>% select(response_values, value),
-                  by = join_by(!!var_i == "response_values"))
-    } 
-    else{
-      # When the response option is multiple select, we need to find and replace to convert the value labels to integers as there could be multiple individual responses selected by the participant
-      df_i <- vector_i_char 
-      df_i[,2] <- df_i[,1]
-      colnames(df_i)[2] <- "temp"
-      for (j in 1:length(cw_var_i$response_values)){ # for each unique response value, do a find and replace 
-        response_value_j <- cw_var_i$response_values[j]
-        integer_value_j <- cw_var_i$value[j]
-        df_i <- df_i %>% 
-          mutate( temp = str_remove_all(str_replace_all(string = temp, 
-                                                        pattern = response_value_j, 
-                                                        replacement = as.character(integer_value_j))
-                                        , "\\{|\\}")
-          )
-      }
-    }
+    df_i <- vector_i_char %>% 
+    left_join(y = cw_var_i %>% select(response_values, value),
+              by = join_by(!!var_i == "response_values"))
+    # } 
+    # else{
+    #   # When the response option is multiple select, we need to find and replace to convert the value labels to integers as there could be multiple individual responses selected by the participant
+    #   df_i <- vector_i_char 
+    #   df_i[,2] <- df_i[,1]
+    #   colnames(df_i)[2] <- "temp"
+    #   for (j in 1:length(cw_var_i$response_values)){ # for each unique response value, do a find and replace 
+    #     response_value_j <- cw_var_i$response_values[j]
+    #     integer_value_j <- cw_var_i$value[j]
+    #     df_i <- df_i %>% 
+    #       mutate( temp = str_remove_all(str_replace_all(string = temp, 
+    #                                                     pattern = response_value_j, 
+    #                                                     replacement = as.character(integer_value_j))
+    #                                     , "\\{|\\}")
+    #       )
+    #   }
+    # }
     # Outside of the if/else conditioned on the Response Options
     vector_i_int <- df_i[,2]
     all_ema_data_D2_per_study_design_integers_pre[,i] <- vector_i_int # substitute the original column vector with the integer-converted one
@@ -135,28 +135,28 @@ for (i in 1:ncol(all_ema_data_D3_random_only)){
     # Will need to treat the multiple select options differently
     vector_i_char <- all_ema_data_D3_random_only[,i]
     cw_var_i <- df_updated_responses_cw %>% filter(Variables == var_i)
-    if(replace_na(cw_var_i$question_type[1] != "multiple_select", T)){ 
+    # if(replace_na(cw_var_i$question_type[1] != "multiple_select", T)){ 
       # If the response options were not multiple select, then we can convert value labels to integers using a join
-      df_i <- vector_i_char %>% 
-        left_join(y = cw_var_i %>% select(response_values, value),
-                  by = join_by(!!var_i == "response_values"))
-    } 
-    else{
-      # When the response option is multiple select, we need to find and replace to convert the value labels to integers as there could be multiple individual responses selected by the participant
-      df_i <- vector_i_char 
-      df_i[,2] <- df_i[,1]
-      colnames(df_i)[2] <- "temp"
-      for (j in 1:length(cw_var_i$response_values)){ # for each unique response value, do a find and replace 
-        response_value_j <- cw_var_i$response_values[j]
-        integer_value_j <- cw_var_i$value[j]
-        df_i <- df_i %>% 
-          mutate( temp = str_remove_all(str_replace_all(string = temp, 
-                                         pattern = response_value_j, 
-                                         replacement = as.character(integer_value_j))
-                                         , "\\{|\\}")
-                  )
-      }
-    }
+    df_i <- vector_i_char %>% 
+    left_join(y = cw_var_i %>% select(response_values, value),
+              by = join_by(!!var_i == "response_values"))   
+    # } 
+    # else{
+    #   # When the response option is multiple select, we need to find and replace to convert the value labels to integers as there could be multiple individual responses selected by the participant
+    #   df_i <- vector_i_char 
+    #   df_i[,2] <- df_i[,1]
+    #   colnames(df_i)[2] <- "temp"
+    #   for (j in 1:length(cw_var_i$response_values)){ # for each unique response value, do a find and replace 
+    #     response_value_j <- cw_var_i$response_values[j]
+    #     integer_value_j <- cw_var_i$value[j]
+    #     df_i <- df_i %>% 
+    #       mutate( temp = str_remove_all(str_replace_all(string = temp, 
+    #                                      pattern = response_value_j, 
+    #                                      replacement = as.character(integer_value_j))
+    #                                      , "\\{|\\}")
+    #               )
+    #   }
+    # }
     # Outside of the if/else conditioned on the Response Options
     vector_i_int <- df_i[,2]
     all_ema_data_D3_random_only_integers_pre[,i] <- vector_i_int # substitute the original column vector with the integer-converted one

@@ -397,8 +397,7 @@ test_ncols <- test_that("check that the number of columns are as expected", {
 
 test_nrows <- test_that("check that the number of rows did not change", {
   expect_equal(object = nrow(all_ema_data_cleaned_v9),
-               expected = nrow(all_ema_data_cleaned_v8))
-})
+               expected = nrow(all_ema_data_cleaned_v8))})
 
 if(test_ncols & test_nrows){print("tests passed, saving datasets to staged folder")
   all_ema_data_cleaned_final <- all_ema_data_cleaned_v9} else{print("1+ tests failed"); stop()}
