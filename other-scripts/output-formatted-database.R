@@ -68,9 +68,11 @@ all_ema_data_D2_per_study_design %>%
 
 ### Integer values version
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D2_per_study_design_integers.RData"))
+load(file = file.path(path_breakfree_staged_data, "create_and_apply_value_labels_SAS_script.RData"))
 
 saveRDS(object = all_ema_data_D2_per_study_design_integers, file = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.rds"))  # R/python users
 write_dta(data = all_ema_data_D2_per_study_design_integers, path = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.dta"))  # Stata/SAS users
+write_file(x = sas_script, file = file.path(path_breakfree_output_data,"create_and_apply_value_labels_SAS_script.sas"))
 
 # General users
 all_ema_data_D2_per_study_design_integers %>%

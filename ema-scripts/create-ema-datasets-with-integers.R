@@ -1,6 +1,9 @@
 library(dplyr)
 library(tidyr)
 library(testthat)
+library(stringr)
+library(purrr)
+
 
 source("paths.R")
 
@@ -215,7 +218,48 @@ test3_na_bycol <- test_that("counts of na values remained the same", {
 })
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# STEP 4. Output Updated Dataset and Crosswalk
+# STEP 4. create SAS syntax to create and apply formats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+format_var_df <- df_updated_responses_cw %>% 
+  as_tibble %>% 
+  mutate(format_level = paste0(value," = \"",response_values,"\"\n\t\t")) %>% 
+  select(Variables,format_level) %>% 
+  group_by(Variables) %>% 
+  summarize(levels = list(format_level)) %>% 
+  mutate(format_var_raw = map_chr(levels,~str_c(., collapse = "")))
+
+
+create_formats_distinct <- format_var_df %>%   distinct(format_var_raw) %>% 
+  mutate(id = row_number(),
+         value_name = paste0('f',id,'f'),
+         format_var = paste0('value ',value_name,' ',format_var_raw,";"))
+
+create_formats <- str_c(create_formats_distinct$format_var,collapse = '\n\t') %>% 
+  paste0('\t',.) %>% 
+  paste("proc format;",.,"run;",sep = '\n')
+
+apply_formats <- format_var_df %>% 
+  inner_join(create_formats_distinct, by = join_by(format_var_raw)) %>% 
+  mutate(apply_format_var = paste0('\t\t',Variables,' ',value_name,'.')) %>% 
+  pull(apply_format_var) %>% 
+  c('data insert_output_dataset_name_formatted;',
+    '\tset insert_input_dataset_name_unformatted;',
+    '\tformat',.,'\t;',
+    'run;') %>% 
+  str_c(.,collapse = '\n')
+
+sas_script <- c(
+  "/***proc format statement to create formats within memory (not saved anywhere)***/",
+  create_formats,
+  "\n/***data step to apply formats. need to alter input and output dataset. they can be the same.***/",
+  apply_formats
+) %>% 
+  str_c(.,collapse = '\n')
+cat(sas_script)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# STEP 5. Output Updated Dataset and Crosswalk
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if(test2_dim & test2_colnames & test2_na_bycol & test3_dim & test3_colnames & test3_na_bycol){
   save(all_ema_data_D2_per_study_design_integers,
@@ -223,5 +267,12 @@ if(test2_dim & test2_colnames & test2_na_bycol & test3_dim & test3_colnames & te
   
   save(all_ema_data_D3_random_only_integers,
        file = file.path(path_breakfree_staged_data, "all_ema_data_D3_random_only_integers.RData"))
+  
+  save(sas_script,
+       file = file.path(path_breakfree_staged_data, "create_and_apply_value_labels_SAS_script.RData"))
   print("Integer version of datasets saved to staged folder")
+  
 } else{print("1+ test failed.")}
+
+
+
