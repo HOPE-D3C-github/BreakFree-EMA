@@ -1,3 +1,5 @@
+# v2.2.1 change: ungroup puffmarker and EMA datasets
+# still output to v2.2 folder
 library(dplyr)
 library(haven)
 library(stringr)
@@ -43,6 +45,8 @@ write.csv(ema_items_labelled, file.path(path_breakfree_output_data_4dm, "ema_ite
 # -----------------------------------------------------------------------------
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D1_all_delivered.RData"))
 
+all_ema_data_D1_all_delivered <- all_ema_data_D1_all_delivered %>% ungroup()
+
 saveRDS(object = all_ema_data_D1_all_delivered, file = file.path(path_breakfree_output_data_4dm, "all_ema_data-1-all_delivered.rds"))  # R/python users
 write_dta(data = all_ema_data_D1_all_delivered, path = file.path(path_breakfree_output_data_4dm, "all_ema_data-1-all_delivered.dta"))  # Stata/SAS users
 
@@ -58,6 +62,8 @@ all_ema_data_D1_all_delivered %>%
 # -----------------------------------------------------------------------------
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D2_per_study_design.RData"))
 
+all_ema_data_D2_per_study_design <- all_ema_data_D2_per_study_design %>% ungroup()
+
 saveRDS(object = all_ema_data_D2_per_study_design, file = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design.rds"))  # R/python users
 write_dta(data = all_ema_data_D2_per_study_design, path = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design.dta"))  # Stata/SAS users
 
@@ -69,6 +75,8 @@ all_ema_data_D2_per_study_design %>%
 ### Integer values version
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D2_per_study_design_integers.RData"))
 load(file = file.path(path_breakfree_staged_data, "create_and_apply_value_labels_SAS_script.RData"))
+
+all_ema_data_D2_per_study_design_integers <- all_ema_data_D2_per_study_design_integers %>% ungroup()
 
 saveRDS(object = all_ema_data_D2_per_study_design_integers, file = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.rds"))  # R/python users
 write_dta(data = all_ema_data_D2_per_study_design_integers, path = file.path(path_breakfree_output_data, "all_ema_data-2-per_study_design_integers.dta"))  # Stata/SAS users
@@ -86,6 +94,8 @@ all_ema_data_D2_per_study_design_integers %>%
 # -----------------------------------------------------------------------------
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D3_random_only.Rdata"))
 
+all_ema_data_D3_random_only <- all_ema_data_D3_random_only %>% ungroup()
+
 saveRDS(object = all_ema_data_D3_random_only, file = file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema.rds"))  # R/python users
 write_dta(data = all_ema_data_D3_random_only, path = file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema.dta"))  # Stata/SAS users
 
@@ -96,6 +106,8 @@ all_ema_data_D3_random_only %>%
 
 ### Integer values version
 load(file = file.path(path_breakfree_staged_data, "all_ema_data_D3_random_only_integers.Rdata"))
+
+all_ema_data_D3_random_only_integers <- all_ema_data_D3_random_only_integers %>% ungroup()
 
 saveRDS(object = all_ema_data_D3_random_only_integers, file = file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema_integers.rds"))  # R/python users
 write_dta(data = all_ema_data_D3_random_only_integers, path = file.path(path_breakfree_output_data, "all_ema_data-3-random_only_ema_integers.dta"))  # Stata/SAS users
@@ -110,6 +122,8 @@ all_ema_data_D3_random_only_integers %>%
 # These time-stamps are the result of an 'online algorithm'
 # -----------------------------------------------------------------------------
 load(file = file.path(path_breakfree_staged_data, "combined_online_puffmarker_episode_data.RData"))
+
+online_puffmarker_episode_data <- online_puffmarker_episode_data %>% ungroup()
 
 saveRDS(object = online_puffmarker_episode_data, file = file.path(path_breakfree_output_data, "online_puffmarker_episode_data.rds"))  # R/python users
 write_dta(data = online_puffmarker_episode_data, path = file.path(path_breakfree_output_data, "online_puffmarker_episode_data.dta"))  # Stata/SAS users
